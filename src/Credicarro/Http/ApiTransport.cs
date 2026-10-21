@@ -110,7 +110,6 @@ internal static class ApiTransport
                 "A API do Credicarro retornou uma resposta em formato inesperado.",
                 response.StatusCode,
                 ProblemDetailsModel.Empty(),
-                rawBody: null,
                 innerException: ex);
         }
 

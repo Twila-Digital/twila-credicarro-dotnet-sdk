@@ -12,7 +12,7 @@ namespace Credicarro.Proposals.Models;
 public sealed class DocumentFile
 {
     /// <summary>Tamanho máximo do arquivo (10 MiB, depois de decodificado).</summary>
-    public const int MaxSizeInBytes = 10 * 1024 * 1024;
+    public static int MaxSizeInBytes { get; } = 10 * 1024 * 1024;
 
     private const int MaxFileNameLength = 255;
     private const int ChunkSize = 81920;

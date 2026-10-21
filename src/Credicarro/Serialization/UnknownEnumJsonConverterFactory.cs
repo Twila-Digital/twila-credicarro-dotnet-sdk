@@ -29,7 +29,10 @@ public sealed class UnknownEnumJsonConverterFactory : JsonConverterFactory
     {
         private readonly TEnum _unknownValue;
 
+        // S1144: o construtor é chamado por reflexão, em CreateConverter (Activator.CreateInstance).
+#pragma warning disable S1144
         public UnknownEnumJsonConverter()
+#pragma warning restore S1144
         {
             var field = FindUnknownMember(typeof(TEnum))
                 ?? throw new InvalidOperationException(
@@ -38,7 +41,10 @@ public sealed class UnknownEnumJsonConverterFactory : JsonConverterFactory
             _unknownValue = (TEnum)field.GetValue(null)!;
         }
 
+        // S1172: typeToConvert e options fazem parte da assinatura do override de JsonConverter<T>.Read.
+#pragma warning disable S1172
         public override TEnum Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+#pragma warning restore S1172
         {
             if (reader.TokenType != JsonTokenType.Number || !reader.TryGetInt32(out var rawValue))
                 return _unknownValue;

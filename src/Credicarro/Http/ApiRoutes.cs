@@ -33,9 +33,21 @@ internal static class ApiRoutes
 
         var v1 = padded.IndexOf("/v1/", StringComparison.OrdinalIgnoreCase);
         var v2 = padded.IndexOf("/v2/", StringComparison.OrdinalIgnoreCase);
-        var index = v1 < 0 ? v2 : v2 < 0 ? v1 : Math.Min(v1, v2);
+        var index = FirstFound(v1, v2);
 
         return index < 0 ? trimmed : padded.Substring(index + 1).TrimEnd('/');
+    }
+
+    /// <summary>A menor das duas posições encontradas por IndexOf, ou -1 se nenhuma foi encontrada.</summary>
+    private static int FirstFound(int first, int second)
+    {
+        if (first < 0)
+            return second;
+
+        if (second < 0)
+            return first;
+
+        return Math.Min(first, second);
     }
 
     public static bool IsAuthentication(string path) =>
