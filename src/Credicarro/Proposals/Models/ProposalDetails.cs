@@ -72,23 +72,17 @@ internal static class PendingActionResolver
         if (state is null || active is null || active.ActionOwner != ActionOwner.Integrator)
             return;
 
-        switch (active.Step)
+        var action = active.Step switch
         {
-            case ProposalStep.DocumentSubmission:
-                actions.Add(new PendingAction(participant, active.Step, PendingActionKind.SendDocuments, DocumentTypesWith(state, DocumentStatus.Pending)));
-                break;
-            case ProposalStep.DocumentCorrection:
-                actions.Add(new PendingAction(participant, active.Step, PendingActionKind.CorrectDocuments, DocumentTypesWith(state, DocumentStatus.Invalid)));
-                break;
-            case ProposalStep.VehicleDetails:
-                actions.Add(new PendingAction(participant, active.Step, PendingActionKind.SendVehicleDetails, Array.Empty<DocumentType>()));
-                break;
-            case ProposalStep.DepositAccount:
-                actions.Add(new PendingAction(participant, active.Step, PendingActionKind.SendDepositAccount, Array.Empty<DocumentType>()));
-                break;
-            default:
-                break;
-        }
+            ProposalStep.DocumentSubmission => new PendingAction(participant, active.Step, PendingActionKind.SendDocuments, DocumentTypesWith(state, DocumentStatus.Pending)),
+            ProposalStep.DocumentCorrection => new PendingAction(participant, active.Step, PendingActionKind.CorrectDocuments, DocumentTypesWith(state, DocumentStatus.Invalid)),
+            ProposalStep.VehicleDetails => new PendingAction(participant, active.Step, PendingActionKind.SendVehicleDetails, Array.Empty<DocumentType>()),
+            ProposalStep.DepositAccount => new PendingAction(participant, active.Step, PendingActionKind.SendDepositAccount, Array.Empty<DocumentType>()),
+            _ => null
+        };
+
+        if (action is not null)
+            actions.Add(action);
     }
 
     private static IReadOnlyList<DocumentType> DocumentTypesWith(ProposalParticipantState state, DocumentStatus status)
