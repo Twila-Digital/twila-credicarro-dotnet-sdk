@@ -29,9 +29,8 @@ jobs:
         uses: github/codeql-action/init@v4
         with:
           languages: csharp
-
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v4
+          # Sem compilar: é o único modo com banco incremental (overlay) nos PRs.
+          build-mode: none
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
