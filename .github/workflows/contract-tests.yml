@@ -1,0 +1,26 @@
+name: Contract tests
+
+on:
+  schedule:
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  contract-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore tests/Credicarro.ContractTests
+
+      - name: Contract tests contra o OpenAPI público
+        run: dotnet test tests/Credicarro.ContractTests -c Release
