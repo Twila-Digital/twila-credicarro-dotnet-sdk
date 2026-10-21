@@ -73,10 +73,8 @@ app.MapPost("/webhooks/credicarro", async (
         return Results.Unauthorized();
     }
 
-    // 2. Corpo bruto, com limite de 1 MiB, antes de qualquer desserialização.
-    if (request.ContentLength > MaxWebhookBodyBytes)
-        return Results.StatusCode(StatusCodes.Status413PayloadTooLarge);
-
+    // 2. Corpo bruto, com limite de 1 MiB, antes de qualquer desserialização. O limite é aplicado na leitura,
+    //    sem confiar no Content-Length (que o remetente controla e pode nem vir, em chunked).
     using var buffer = new MemoryStream();
     var chunk = new byte[8192];
     int read;

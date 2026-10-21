@@ -1,5 +1,9 @@
 namespace Credicarro.Webhooks.Models;
 
+// S3996: a URL do webhook fica como string, como nos demais SDKs. System.Uri normaliza o valor (host em minúsculas,
+// escapes, barra final) e a API valida e devolve exatamente a URL cadastrada pelo integrador.
+#pragma warning disable S3996
+
 /// <summary>
 /// Cadastro de webhook (<c>POST v1/webhook</c>).
 /// </summary>
