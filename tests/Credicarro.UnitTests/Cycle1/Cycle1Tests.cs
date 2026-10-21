@@ -61,8 +61,6 @@ public class Cycle1Tests
 
     private static DocumentFile Pdf() => DocumentFile.FromBytes(Encoding.UTF8.GetBytes("%PDF-1.7 conteudo"), "cnh.pdf");
 
-    // ---- Convenção 1: timeouts
-
     [Fact]
     public void ClientesHttp_TemTimeoutInfinitoEPrimarioSemRedirect()
     {
@@ -104,7 +102,7 @@ public class Cycle1Tests
         {
             options.Resilience.AttemptTimeout = TimeSpan.FromMilliseconds(100);
             options.Resilience.DocumentUploadAttemptTimeout = TimeSpan.FromMilliseconds(250);
-            options.Resilience.MaxRetryAttempts = 3; // orçamento total do upload: 3 x 250 ms
+            options.Resilience.MaxRetryAttempts = 3;
         });
         var client = provider.GetRequiredService<ICredicarroClient>();
         var stopwatch = Stopwatch.StartNew();
@@ -142,8 +140,6 @@ public class Cycle1Tests
 
         Assert.True(stopwatch.Elapsed < TimeSpan.FromSeconds(5));
     }
-
-    // ---- Convenção 2: Retry-After
 
     private static FakeHttpMessageHandler RateLimited(Action<HttpResponseMessage> configure, int succeedAfter = int.MaxValue) =>
         new((_, callIndex) =>
@@ -242,8 +238,6 @@ public class Cycle1Tests
         Assert.Equal(TimeSpan.FromHours(24), RetryAfterHeader.From(With(new System.Net.Http.Headers.RetryConditionHeaderValue(now.AddYears(50))), now));
     }
 
-    // ---- Convenção 3: redirects
-
     [Theory]
     [InlineData(301)]
     [InlineData(302)]
@@ -263,8 +257,6 @@ public class Cycle1Tests
         Assert.Equal((HttpStatusCode)status, exception.StatusCode);
         Assert.Equal(1, inner.CallCount);
     }
-
-    // ---- Convenção 5: falha de rede
 
     [Fact]
     public async Task FalhaDeRedeDepoisDasTentativas_ViraTimeoutComCausaSanitizada()
@@ -294,8 +286,6 @@ public class Cycle1Tests
         await Assert.ThrowsAsync<CredicarroTimeoutException>(() => provider.GetRequiredService<ICredicarroClient>().Customers.CreateAsync(request));
     }
 
-    // ---- Convenção 6: circuit breaker
-
     [Fact]
     public async Task CircuitBreaker_ExcecaoNaMeiaAbertura_NaoFicaPreso()
     {
@@ -318,19 +308,17 @@ public class Cycle1Tests
 
         await Assert.ThrowsAsync<CredicarroApiException>(() => client.GetAsync(Guid.NewGuid()));
         await Assert.ThrowsAsync<CredicarroApiException>(() => client.GetAsync(Guid.NewGuid()));
-        await Assert.ThrowsAsync<CredicarroTimeoutException>(() => client.GetAsync(Guid.NewGuid())); // aberto
+        await Assert.ThrowsAsync<CredicarroTimeoutException>(() => client.GetAsync(Guid.NewGuid()));
 
         await Task.Delay(800);
         mode = "excecao";
-        await Assert.ThrowsAsync<InvalidOperationException>(() => client.GetAsync(Guid.NewGuid())); // meia-abertura
+        await Assert.ThrowsAsync<InvalidOperationException>(() => client.GetAsync(Guid.NewGuid()));
 
         mode = "ok";
-        var simulation = await client.GetAsync(Guid.NewGuid()); // não ficou preso
+        var simulation = await client.GetAsync(Guid.NewGuid());
 
         Assert.NotNull(simulation);
     }
-
-    // ---- Convenção 10: buffer único
 
     [Fact]
     public async Task Upload_ReusaOMesmoArrayEmTodasAsTentativasENoReplayDo401()
@@ -372,7 +360,7 @@ public class Cycle1Tests
         public override bool CanRead => true;
         public override bool CanSeek => false;
         public override bool CanWrite => false;
-        public override long Length => 0; // mente: nunca confiar em Length
+        public override long Length => 0;
         public override long Position { get => 0; set => throw new NotSupportedException(); }
         public override void Flush() { }
         public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
@@ -427,8 +415,6 @@ public class Cycle1Tests
         Assert.Equal("application/json", clone.Content!.Headers.ContentType!.MediaType);
     }
 
-    // ---- Convenção 8 e novo parâmetro opcional
-
     [Fact]
     public async Task Customers_CreateAddressEProfessional_AceitamIdempotencyKeyExplicita()
     {
@@ -472,8 +458,6 @@ public class Cycle1Tests
 
         Assert.Equal(new string('k', 200), inner.Requests.Single().Header("Idempotency-Key"));
     }
-
-    // ---- Convenção 9: PII
 
     [Fact]
     public void ToString_DasRequisicoesERespostas_MascaraDadosPessoais()

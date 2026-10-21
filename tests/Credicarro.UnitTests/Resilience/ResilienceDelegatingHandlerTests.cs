@@ -26,8 +26,6 @@ public class ResilienceDelegatingHandlerTests
     private static FakeHttpMessageHandler AlwaysFail(int status) =>
         new((_, _) => Task.FromResult(TestApiClientFactory.Status(status)));
 
-    // ---- Requisições seguras (GET)
-
     [Fact]
     public async Task SendAsync_GetCom503_TentaNovamenteAteSucesso()
     {
@@ -76,7 +74,6 @@ public class ResilienceDelegatingHandlerTests
         }
         catch (CredicarroAuthenticationException)
         {
-            // 401 é tratado pela renovação de token (2 chamadas), não pelo retry.
         }
 
         Assert.Equal(status == 401 ? 2 : 1, inner.CallCount);
@@ -105,8 +102,6 @@ public class ResilienceDelegatingHandlerTests
 
         Assert.Equal(1, inner.CallCount);
     }
-
-    // ---- HTTP 500
 
     [Fact]
     public async Task SendAsync_GetCom500_TentaNovamentePorPadrao()
@@ -143,8 +138,6 @@ public class ResilienceDelegatingHandlerTests
         Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
         Assert.Equal(1, inner.CallCount);
     }
-
-    // ---- POST com Idempotency-Key (automática)
 
     [Fact]
     public async Task SendAsync_PostDeCriacaoCom503_TentaNovamenteComAMesmaIdempotencyKey()
@@ -200,8 +193,6 @@ public class ResilienceDelegatingHandlerTests
         Assert.All(inner.Requests, request => Assert.Equal("{\"conteudoBase64\":\"AAAA\"}", request.Body));
     }
 
-    // ---- POST customer/unified
-
     [Fact]
     public async Task SendAsync_UnifiedSemChave_NaoERepetidoENaoRecebeChaveAutomatica()
     {
@@ -241,8 +232,6 @@ public class ResilienceDelegatingHandlerTests
         Assert.All(inner.Requests, r => Assert.Equal("criar-cliente-1", r.Header("Idempotency-Key")));
     }
 
-    // ---- POST webhook (cadastro)
-
     [Fact]
     public async Task SendAsync_PostDeWebhook_NaoERepetido()
     {
@@ -254,8 +243,6 @@ public class ResilienceDelegatingHandlerTests
         Assert.Equal(1, inner.CallCount);
         Assert.False(inner.Requests[0].HasHeader("Idempotency-Key"));
     }
-
-    // ---- Substituição e webhooks por id
 
     [Theory]
     [InlineData("vehicle-detail")]
@@ -297,8 +284,6 @@ public class ResilienceDelegatingHandlerTests
 
         Assert.Equal(1, inner.CallCount);
     }
-
-    // ---- Retry-After, rede, timeout, circuit breaker, cancelamento
 
     [Fact]
     public async Task SendAsync_Com429ComRetryAfter_RespeitaODelayInformado()

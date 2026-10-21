@@ -64,7 +64,6 @@ public sealed class DocumentFile
 
         while (true)
         {
-            // Lê no máximo até MAX + 1 bytes: nunca confia em Length e nunca lê além do necessário para detectar o excesso.
             var toRead = (int)Math.Min(chunk.Length, (long)MaxSizeInBytes + 1 - buffer.Length);
 
             if (toRead <= 0)

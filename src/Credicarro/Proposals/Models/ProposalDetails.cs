@@ -87,7 +87,6 @@ internal static class PendingActionResolver
                 actions.Add(new PendingAction(participant, active.Step, PendingActionKind.SendDepositAccount, Array.Empty<DocumentType>()));
                 break;
             default:
-                // As demais etapas dependem do cliente, da loja ou do Credicarro: não há ação do integrador.
                 break;
         }
     }

@@ -138,7 +138,6 @@ public class AccessTokenProviderTests
         provider.Invalidate(stale);
         var current = await provider.GetTokenAsync(CancellationToken.None);
 
-        // Uma segunda chamada em voo, que ainda segurava o token antigo, recebe 401 e tenta invalidar.
         provider.Invalidate(stale);
         var afterStaleInvalidation = await provider.GetTokenAsync(CancellationToken.None);
 

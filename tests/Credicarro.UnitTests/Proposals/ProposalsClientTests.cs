@@ -71,8 +71,6 @@ public class ProposalsClientTests
         }
         """;
 
-    // ---- Create
-
     [Fact]
     public async Task CreateAsync_EnviaCpfESimulacaoIdComChaveAutomaticaEDevolveOIdDaProposta()
     {
@@ -106,8 +104,6 @@ public class ProposalsClientTests
         Assert.Equal(code, exception.ErrorCode);
         Assert.Equal(1, inner.CallCount);
     }
-
-    // ---- Get / GetPendingActions
 
     [Fact]
     public async Task GetAsync_MapeiaORetratoCompletoDaProposta()
@@ -300,8 +296,6 @@ public class ProposalsClientTests
         Assert.Empty(details.GetPendingActions());
     }
 
-    // ---- List
-
     [Fact]
     public async Task ListAsync_MapeiaAPropostaResumidaEAPaginacao()
     {
@@ -355,8 +349,6 @@ public class ProposalsClientTests
         Assert.Equal(3, page.Page);
         Assert.Equal(6, page.TotalCount);
     }
-
-    // ---- Vehicle detail / deposit account
 
     [Fact]
     public async Task SendVehicleDetailsAsync_EnviaOsQuatroCamposSemIdempotencyKey()
@@ -432,8 +424,6 @@ public class ProposalsClientTests
 
         await Assert.ThrowsAsync<ArgumentException>(() => CreateClient(NoContent()).SendDepositAccountAsync(ProposalId, account));
     }
-
-    // ---- Upload de documento
 
     private static DocumentFile Pdf() => DocumentFile.FromBytes(Encoding.UTF8.GetBytes("%PDF-1.7 conteudo"), "cnh-comprador.pdf");
 

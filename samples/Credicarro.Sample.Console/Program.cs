@@ -31,7 +31,6 @@ var client = provider.GetRequiredService<ICredicarroClient>();
 
 try
 {
-    // 1. Cadastro completo do cliente. Sem idempotencyKey, a rota cria ou atualiza (upsert).
     Console.WriteLine("Cadastrando o cliente...");
 
     await client.Customers.UpsertAsync(new UpsertCustomerRequest(
@@ -44,7 +43,6 @@ try
         Address: new CustomerAddress("Av. Paulista", "Bela Vista", "São Paulo", "SP", "01311000", Number: "1578"),
         ProfessionalData: new ProfessionalData(OccupationType.Employee, 6500.00m)));
 
-    // 2. Faixa de entrada e simulação de financiamento.
     Console.WriteLine("Consultando a entrada mínima por prazo...");
 
     var range = await client.Simulations.GetFinancingRangeAsync("ABC1D23", storeCnpj);
@@ -66,7 +64,6 @@ try
     foreach (var simulation in simulations)
         Console.WriteLine($"  {simulation.Term}x de R$ {simulation.InstallmentAmount:0.00} (CET a.a. {simulation.AnnualCet:0.00}%)");
 
-    // 3. Proposta a partir da primeira opção e o que falta enviar.
     var proposalId = await client.Proposals.CreateAsync(new CreateProposalRequest("12345678909", simulations[0].SimulationId));
     Console.WriteLine($"Proposta criada: {proposalId}");
 

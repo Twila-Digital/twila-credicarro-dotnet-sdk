@@ -8,7 +8,6 @@ namespace Credicarro.UnitTests.Webhooks;
 
 public class CredicarroWebhookEventTests
 {
-    // Vetor publicado na documentação (webhooks/security.mdx), calculado de forma independente do SDK.
     private const string DocSecret = "segredo-de-exemplo";
     private const string DocTimestamp = "1715792400";
     private const string DocBody = """{"id_proposta":"bea8d060-f93d-48eb-b6c4-45f64483cdd9","enum_status":2,"status":"Approved"}""";
@@ -58,8 +57,6 @@ public class CredicarroWebhookEventTests
     private static string Sign(string secret, string timestamp, string body) =>
         CredicarroWebhookEvent.ComputeSignature(secret, timestamp, body);
 
-    // ---- Vetor da documentação
-
     [Fact]
     public void ComputeSignature_ReproduzOVetorDaDocumentacao()
     {
@@ -85,8 +82,6 @@ public class CredicarroWebhookEventTests
     {
         Assert.True(CredicarroWebhookEvent.VerifySignature(DocBody, DocHeader, DocSecret, null, DocTime));
     }
-
-    // ---- Janela de tolerância
 
     [Theory]
     [InlineData(0, true)]
@@ -122,8 +117,6 @@ public class CredicarroWebhookEventTests
 
         Assert.Contains("tolerância", exception.Message, StringComparison.Ordinal);
     }
-
-    // ---- Assinatura inválida
 
     [Fact]
     public void Parse_ComCorpoAlterado_Lanca()
@@ -172,7 +165,6 @@ public class CredicarroWebhookEventTests
     [InlineData("")]
     public void SegredoVazio_ENuncaValido(string? secret)
     {
-        // Mesmo uma "assinatura" calculada com chave vazia não pode ser aceita.
         var header = $"t={DocTimestamp},v1={Sign("x", DocTimestamp, DocBody)}";
 
         Assert.False(CredicarroWebhookEvent.VerifySignature(DocBody, header, secret!, null, DocTime));
@@ -333,8 +325,6 @@ public class CredicarroWebhookEventTests
         Assert.Throws<ArgumentNullException>(() => CredicarroWebhookEvent.Parse(null!, DocHeader, DocSecret, null, DocTime));
     }
 
-    // ---- Payloads
-
     [Fact]
     public void Parse_SemVerificacao_LePayloadSimplesV1EmIngles()
     {
@@ -446,8 +436,6 @@ public class CredicarroWebhookEventTests
     {
         Assert.Throws<CredicarroWebhookSignatureException>(() => CredicarroWebhookEvent.ParseUnverified(body));
     }
-
-    // ---- Header Authorization
 
     [Theory]
     [InlineData("Basic dXN1YXJpbzpzZW5oYQ==", "Basic dXN1YXJpbzpzZW5oYQ==", true)]

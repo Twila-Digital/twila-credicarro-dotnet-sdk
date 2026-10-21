@@ -41,7 +41,6 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton(ResolveOptions);
 
-        // Pipelines singleton: o estado do circuit breaker precisa sobreviver à rotação dos handlers do IHttpClientFactory.
         services.AddKeyedSingleton(ApiPipelineKey, (sp, _) => ResiliencePipelineFactory.Create(sp.GetRequiredService<CredicarroOptions>().Resilience));
         services.AddKeyedSingleton(AuthPipelineKey, (sp, _) => ResiliencePipelineFactory.Create(sp.GetRequiredService<CredicarroOptions>().Resilience));
 
@@ -52,7 +51,6 @@ public static class ServiceCollectionExtensions
         services.AddHttpClient<ITokenApiClient, TokenApiClient>(HttpClientNames.Auth, (sp, client) =>
             {
                 client.BaseAddress = sp.GetRequiredService<CredicarroOptions>().ResolveBaseUrl();
-                // Os timeouts vêm da pipeline de resiliência; o padrão de 100 s do HttpClient cortaria o orçamento antes.
                 client.Timeout = Timeout.InfiniteTimeSpan;
             })
             .ConfigurePrimaryHttpMessageHandler(CreatePrimaryHandler)
@@ -94,7 +92,6 @@ public static class ServiceCollectionExtensions
         }
         catch (OptionsValidationException ex)
         {
-            // As mensagens de validação citam apenas o campo, nunca o valor (o ClientSecret não aparece).
             throw new CredicarroConfigurationException(
                 "Configuração do Credicarro inválida: " + string.Join(" ", ex.Failures),
                 ex);

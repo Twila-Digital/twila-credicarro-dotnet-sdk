@@ -62,8 +62,6 @@ internal sealed class ProposalsClient(HttpClient httpClient) : IProposalsClient
 
     public Task UploadDocumentAsync(Guid proposalId, ProposalDocumentUpload upload, string? idempotencyKey = null, CancellationToken cancellationToken = default)
     {
-        // O header é obrigatório nesta rota: sem chave do integrador, geramos uma por chamada. Ela vai no request,
-        // antes do retry, então é a mesma em todas as tentativas (mesmo com DisableAutomaticIdempotencyKey).
         var key = ApiTransport.ValidateIdempotencyKey(idempotencyKey, nameof(idempotencyKey)) ?? Guid.NewGuid().ToString();
         var wireRequest = ProposalMapper.ToWire(upload);
 

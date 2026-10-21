@@ -35,7 +35,6 @@ internal static class ResiliencePipelineFactory
                 DelayGenerator = args => new ValueTask<TimeSpan?>(GetRetryDelay(args, options)),
                 OnRetry = args =>
                 {
-                    // Libera a conexão da tentativa que será repetida.
                     args.Outcome.Result?.Dispose();
                     return default;
                 }
@@ -108,7 +107,6 @@ internal static class ResiliencePipelineFactory
         if (!IsTransientFailure(args.Outcome, options))
             return false;
 
-        // Retry-After maior que o orçamento restante: não espera, devolve a resposta (vira RateLimit com RetryAfter).
         return RetryAfterHeader.From(args.Outcome.Result) is not { } retryAfter || retryAfter <= Remaining(args.Context, options);
     }
 

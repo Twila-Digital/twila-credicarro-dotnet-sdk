@@ -11,7 +11,6 @@ internal sealed class ResilienceDelegatingHandler(ResiliencePipeline<HttpRespons
 {
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
-        // O corpo é lido uma única vez; as tentativas compartilham o mesmo array.
         await request.EnsureBufferedAsync().ConfigureAwait(false);
 
         var context = ResilienceContextPool.Shared.Get(cancellationToken);
@@ -70,7 +69,7 @@ internal sealed class ResilienceDelegatingHandler(ResiliencePipeline<HttpRespons
         _ = executeTask.ContinueWith(
             static (task, state) =>
             {
-                _ = task.Exception; // observa a exceção da tarefa órfã
+                _ = task.Exception;
                 ResilienceContextPool.Shared.Return((ResilienceContext)state!);
             },
             context,

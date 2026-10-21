@@ -3,7 +3,6 @@ using Credicarro.Internal.Generated.Proposals;
 
 namespace Credicarro.Internal.Generated.Webhooks;
 
-// S3996: o contrato JSON trafega a URL como texto, sem normalização (ver Webhooks/Models/WebhookModels.cs).
 #pragma warning disable S3996
 
 internal sealed record CreateWebhookRequestWire(

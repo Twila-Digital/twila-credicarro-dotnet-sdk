@@ -20,8 +20,6 @@ public class Cycle2Tests
     private static TokenApiClient TokenClient(FakeHttpMessageHandler inner) =>
         new(new HttpClient(inner) { BaseAddress = new Uri("https://api.staging.credicarro.com.br/integration/") });
 
-    // ---- Item 16: erros do endpoint de token
-
     [Theory]
     [InlineData(400)]
     [InlineData(401)]
@@ -66,8 +64,6 @@ public class Cycle2Tests
         await Assert.ThrowsAsync<CredicarroBusinessRuleException>(() => TokenClient(unprocessable).GenerateAsync("id", "s", CancellationToken.None));
         await Assert.ThrowsAsync<CredicarroRateLimitException>(() => TokenClient(limited).GenerateAsync("id", "s", CancellationToken.None));
     }
-
-    // ---- Item 9-bis: serialização leva os valores reais; máscara só no ToString
 
     private static readonly UpsertCustomerRequest Customer = new(
         "12345678909", "Maria", "Souza", "maria.souza@exemplo.com.br", "+55 (11) 99876-5432",
@@ -147,15 +143,12 @@ public class Cycle2Tests
         Assert.DoesNotContain("12345678909", exception.Message, StringComparison.Ordinal);
     }
 
-    // ---- Item 1: contexto do pool só volta quando a tarefa termina
-
     [Fact]
     public async Task ChamadaCanceladaEnquantoEmVoo_NaoCorrompeAsChamadasSeguintes()
     {
         var release = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
         var inner = new FakeHttpMessageHandler(async (request, callIndex, _) =>
         {
-            // A primeira chamada ignora o cancelamento e fica "órfã" até ser liberada.
             if (callIndex == 1)
                 await release.Task;
 
@@ -169,7 +162,6 @@ public class Cycle2Tests
         cts.Cancel();
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => first);
 
-        // Outras chamadas enquanto a órfã ainda está viva: cada uma usa o próprio contexto.
         var results = await Task.WhenAll(Enumerable.Range(0, 10).Select(_ => client.GetAsync(Guid.NewGuid())));
         Assert.All(results, simulation => Assert.Equal(12, simulation.Term));
 

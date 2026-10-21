@@ -28,11 +28,9 @@ public sealed class WireContractTests(OpenApiSchemaFixture fixture)
     /// </summary>
     public static IEnumerable<object[]> WireTypes()
     {
-        // Autenticação
         yield return Case(typeof(Credicarro.Authentication.Models.GenerateAccessTokenRequest), "post", "/v1/authentication/accesstoken", Request);
         yield return Case(typeof(Credicarro.Authentication.Models.GenerateAccessTokenResponse), "post", "/v1/authentication/accesstoken", Response);
 
-        // Cliente
         yield return Case(typeof(CreateCustomerRequestWire), "post", "/v1/customer", Request);
         yield return Case(typeof(CustomerIdResponseWire), "post", "/v1/customer", Response);
         yield return Case(typeof(UpsertCustomerRequestWire), "post", "/v1/customer/unified", Request);
@@ -40,7 +38,6 @@ public sealed class WireContractTests(OpenApiSchemaFixture fixture)
         yield return Case(typeof(UpsertAddressRequestWire), "post", "/v1/customer/address", Request);
         yield return Case(typeof(UpsertProfessionalRequestWire), "post", "/v1/customer/professional", Request);
 
-        // Simulação v2
         yield return Case(typeof(FinancingRangeResponseWire), "get", "/v2/proposal/simulation/range/financing", Response);
         yield return Case(typeof(RefinancingRangeResponseWire), "get", "/v2/proposal/simulation/range/refinancing", Response);
         yield return Case(typeof(CreateFinancingSimulationRequestWire), "post", "/v2/proposal/simulation/financing", Request);
@@ -48,7 +45,6 @@ public sealed class WireContractTests(OpenApiSchemaFixture fixture)
         yield return Case(typeof(CreateRefinancingSimulationRequestWire), "post", "/v2/proposal/simulation/refinancing", Request);
         yield return Case(typeof(SimulationListResponseWire), "post", "/v2/proposal/simulation/refinancing", Response);
 
-        // Simulação v1
         yield return Case(typeof(FinancingRangeResponseWire), "get", "/v1/proposal/simulation/range/financing", Response);
         yield return Case(typeof(RefinancingRangeResponseWire), "get", "/v1/proposal/simulation/range/refinancing", Response);
         yield return Case(typeof(CreateFinancingSimulationV1RequestWire), "post", "/v1/proposal/simulation/financing", Request);
@@ -58,7 +54,6 @@ public sealed class WireContractTests(OpenApiSchemaFixture fixture)
         yield return Case(typeof(SimulationWire), "get", "/v1/proposal/simulation/{simulacaoId}", Response);
         yield return Case(typeof(PagedResultWire<SimulationWire>), "get", "/v1/proposal/simulation", Response);
 
-        // Proposta
         yield return Case(typeof(CreateProposalRequestWire), "post", "/v2/proposal", Request);
         yield return Case(typeof(ProposalIdResponseWire), "post", "/v2/proposal", Response);
         yield return Case(typeof(CreateProposalRequestWire), "post", "/v1/proposal", Request);
@@ -70,7 +65,6 @@ public sealed class WireContractTests(OpenApiSchemaFixture fixture)
         yield return Case(typeof(DepositAccountRequestWire), "post", "/v2/proposal/{propostaId}/deposit-account", Request);
         yield return Case(typeof(DocumentUploadRequestWire), "post", "/v2/proposal/{propostaId}/document", Request);
 
-        // Webhook
         yield return Case(typeof(CreateWebhookRequestWire), "post", "/v1/webhook", Request);
         yield return Case(typeof(CreateWebhookResponseWire), "post", "/v1/webhook", Response);
         yield return Case(typeof(PagedResultWire<WebhookWire>), "get", "/v1/webhook", Response);
@@ -177,7 +171,6 @@ public sealed class WireContractTests(OpenApiSchemaFixture fixture)
             .Select(operation => operation.Path)
             .ToArray();
 
-        // O SDK nunca gera chave automática para o unified (a chave muda o comportamento da rota).
         var expected = accepting.Where(path => path != "/v1/customer/unified").OrderBy(x => x, StringComparer.Ordinal).ToArray();
 
         Assert.Equal(expected, automatic.OrderBy(x => x, StringComparer.Ordinal).ToArray());

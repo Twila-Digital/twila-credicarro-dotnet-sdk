@@ -22,8 +22,6 @@ internal static class ApiTransport
 
     public static HttpRequestMessage CreateJsonRequest<T>(HttpMethod method, string path, T body, string? idempotencyKey = null)
     {
-        // Serializa direto para UTF-8, uma vez só (sem string UTF-16 intermediária). As tentativas e o replay do 401
-        // reutilizam este mesmo array.
         var bytes = JsonSerializer.SerializeToUtf8Bytes(body, CredicarroJsonOptions.Default);
         var content = new BufferedContent(bytes);
         content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json") { CharSet = "utf-8" };
@@ -89,7 +87,6 @@ internal static class ApiTransport
     private static async Task<T> ReadAsync<T>(HttpResponseMessage response, CancellationToken cancellationToken)
         where T : class
     {
-        // No .NET Framework, uma resposta sem corpo pode vir com Content nulo.
         if (response.Content is null)
         {
             throw new CredicarroApiException(
