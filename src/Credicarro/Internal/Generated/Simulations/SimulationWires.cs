@@ -24,12 +24,14 @@ internal sealed record CreateFinancingSimulationRequestWire(
     [property: JsonPropertyName("valorEntrada")] decimal ValorEntrada,
     [property: JsonPropertyName("uf")] string Uf,
     [property: JsonPropertyName("isVeiculoZeroKm")] bool IsVeiculoZeroKm,
+    [property: JsonPropertyName("retornoComissao")] int? RetornoComissao,
     [property: JsonPropertyName("cnpjLoja")] string CnpjLoja);
 
 internal sealed record CreateRefinancingSimulationRequestWire(
     [property: JsonPropertyName("cpf")] string Cpf,
     [property: JsonPropertyName("placa")] string Placa,
     [property: JsonPropertyName("valorSolicitado")] decimal ValorSolicitado,
+    [property: JsonPropertyName("retornoComissao")] int? RetornoComissao,
     [property: JsonPropertyName("cnpjLoja")] string CnpjLoja);
 
 internal sealed record CreateFinancingSimulationV1RequestWire(
@@ -47,6 +49,16 @@ internal sealed record CreateRefinancingSimulationV1RequestWire(
 
 internal sealed record SimulationListResponseWire(
     [property: JsonPropertyName("simulacoes")] IReadOnlyList<SimulationOptionWire>? Simulacoes);
+
+internal sealed record CommissionReturnWire(
+    [property: JsonPropertyName("tipo")] string? Tipo,
+    [property: JsonPropertyName("alvo")] string? Alvo,
+    [property: JsonPropertyName("retorno_minimo")] int RetornoMinimo,
+    [property: JsonPropertyName("retorno_maximo")] int RetornoMaximo,
+    [property: JsonPropertyName("permite_taxa_padrao")] bool PermiteTaxaPadrao);
+
+internal sealed record ListCommissionReturnsResponseWire(
+    [property: JsonPropertyName("retornos_comissao")] IReadOnlyList<CommissionReturnWire>? RetornosComissao);
 
 internal sealed record SimulationOptionWire(
     [property: JsonPropertyName("id_simulacao")] Guid IdSimulacao,
