@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/samples/">
+    <Project Path="samples/Credicarro.Sample.AspNetCore/Credicarro.Sample.AspNetCore.csproj" />
+    <Project Path="samples/Credicarro.Sample.Console/Credicarro.Sample.Console.csproj" />
+    <Project Path="samples/Credicarro.Sample.NetFramework/Credicarro.Sample.NetFramework.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Credicarro/Credicarro.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Credicarro.UnitTests/Credicarro.UnitTests.csproj" />
+    <Project Path="tests/Credicarro.ContractTests/Credicarro.ContractTests.csproj" />
+  </Folder>
+</Solution>

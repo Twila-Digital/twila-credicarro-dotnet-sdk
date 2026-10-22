@@ -1,0 +1,26 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+artifacts/
+
+## Test results
+TestResults/
+*.trx
+coverage*.info
+coverage*.xml
+
+## Rider/VS Code
+.idea/
+.vscode/
+
+## OS
+.DS_Store
+Thumbs.db
+
+## Artefatos de pacote e cobertura
+*.nupkg
+*.snupkg
+coverage/

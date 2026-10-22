@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [production]
+  push:
+    branches: [production]
+  workflow_call:
+    secrets:
+      CODECOV_TOKEN:
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore ${{ matrix.os == 'windows-latest' && 'Credicarro.slnx' || 'src/Credicarro/Credicarro.csproj' }}
+
+      - name: Build
+        run: dotnet build ${{ matrix.os == 'windows-latest' && 'Credicarro.slnx' || 'src/Credicarro/Credicarro.csproj' }} --no-restore -c Release
+
+  test:
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore tests/Credicarro.UnitTests
+
+      - name: Unit tests (net8.0)
+        run: dotnet test tests/Credicarro.UnitTests --no-restore -c Release -f net8.0 --collect:"XPlat Code Coverage" --results-directory ./coverage
+
+      - name: Unit tests (net472)
+        if: matrix.os == 'windows-latest'
+        run: dotnet test tests/Credicarro.UnitTests --no-restore -c Release -f net472
+
+      - name: Upload coverage to Codecov
+        if: matrix.os == 'ubuntu-latest'
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: ./coverage
+          fail_ci_if_error: false
