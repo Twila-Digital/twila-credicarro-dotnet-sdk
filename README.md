@@ -87,7 +87,9 @@ var opcoes = await client.Simulations.CreateFinancingAsync(new CreateFinancingSi
     DownPayment: 9000m,
     State: "SP",
     IsZeroKm: false,
-    StoreCnpj: "11.222.333/0001-81"));
+    StoreCnpj: "11.222.333/0001-81"
+    // CommissionReturn: 2, // opcional, dentro da faixa configurada na loja (ver GetCommissionReturnsAsync)
+    ));
 
 // 3. Proposta a partir da opção escolhida (cada opção gera uma única proposta).
 var propostaId = await client.Proposals.CreateAsync(new CreateProposalRequest("12345678909", opcoes[0].SimulationId));
@@ -152,10 +154,10 @@ A `Idempotency-Key` é **obrigatória** nesta rota. Gere uma chave **por envio**
 | Cliente | Métodos |
 | --- | --- |
 | `client.Customers` | `UpsertAsync` (`POST v1/customer/unified`), `CreateAsync`, `UpsertAddressAsync`, `UpsertProfessionalDataAsync` |
-| `client.Simulations` | `GetFinancingRangeAsync`, `GetRefinancingRangeAsync`, `CreateFinancingAsync`, `CreateRefinancingAsync`, `GetAsync`, `ListAsync` |
+| `client.Simulations` | `GetFinancingRangeAsync`, `GetRefinancingRangeAsync`, `GetCommissionReturnsAsync`, `CreateFinancingAsync`, `CreateRefinancingAsync`, `GetAsync`, `ListAsync` |
 | `client.Proposals` | `CreateAsync`, `GetAsync`, `ListAsync`, `SendVehicleDetailsAsync`, `SendDepositAccountAsync`, `UploadDocumentAsync` |
 | `client.Webhooks` | `CreateAsync`, `ListAsync`, `UpdateAsync`, `DeleteAsync` |
-| `client.V1.Simulations` | `GetFinancingRangeAsync(placa)`, `GetRefinancingRangeAsync(placa)`, `CreateFinancingAsync`, `CreateRefinancingAsync` (rotas v1, sem `cnpjLoja`) |
+| `client.V1.Simulations` | `GetFinancingRangeAsync(placa)`, `GetRefinancingRangeAsync(placa)`, `CreateFinancingAsync`, `CreateRefinancingAsync` (rotas v1, sem `cnpjLoja` nem `retornoComissao`) |
 | `client.V1.Proposals` | `CreateAsync` (`POST v1/proposal`), `GetAsync` (`GET v1/proposal/{id}`, formato resumido) |
 | `CredicarroWebhookEvent` | `Parse`, `VerifySignature`, `VerifyAuthorization` (estático, para o seu endpoint de webhook) |
 

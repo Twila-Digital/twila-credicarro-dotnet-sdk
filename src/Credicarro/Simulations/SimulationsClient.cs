@@ -26,6 +26,18 @@ internal sealed class SimulationsClient(HttpClient httpClient) : ISimulationsCli
         return (wire.OpcoesPorPrazo ?? Array.Empty<RefinancingRangeOptionWire>()).Select(SimulationMapper.ToPublic).ToList();
     }
 
+    public async Task<IReadOnlyList<CommissionReturn>> GetCommissionReturnsAsync(string storeCnpj, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(storeCnpj))
+            throw new ArgumentException("O CNPJ da loja é obrigatório.", nameof(storeCnpj));
+
+        var path = new QueryStringBuilder().Add("cnpjLoja", storeCnpj).Build("v2/proposal/simulation/commission-returns");
+
+        var wire = await ApiTransport.GetAsync<ListCommissionReturnsResponseWire>(httpClient, path, cancellationToken).ConfigureAwait(false);
+
+        return (wire.RetornosComissao ?? Array.Empty<CommissionReturnWire>()).Select(SimulationMapper.ToPublic).ToList();
+    }
+
     public async Task<IReadOnlyList<SimulationOption>> CreateFinancingAsync(CreateFinancingSimulationRequest request, CancellationToken cancellationToken = default)
     {
         var wireRequest = SimulationMapper.ToWire(request);

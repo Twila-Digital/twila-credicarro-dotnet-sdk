@@ -10,12 +10,17 @@ namespace Credicarro.Simulations.Models;
 /// <param name="LicensePlate">Placa (<c>placa</c>).</param>
 /// <param name="RequestedAmount">Valor solicitado em reais (<c>valorSolicitado</c>).</param>
 /// <param name="StoreCnpj">CNPJ da loja de integração (<c>cnpjLoja</c>).</param>
+/// <param name="CommissionReturn">
+/// Retorno de comissão a ser aplicado, dentro da faixa configurada na loja (<c>retornoComissao</c>). Opcional: omita
+/// para usar a taxa padrão, quando a loja permitir. Consulte a faixa aceita com <see cref="ISimulationsClient.GetCommissionReturnsAsync"/>.
+/// </param>
 public sealed record CreateRefinancingSimulationRequest(
     string Cpf,
     string LicensePlate,
     decimal RequestedAmount,
-    string StoreCnpj)
+    string StoreCnpj,
+    int? CommissionReturn = null)
 {
     public override string ToString() =>
-        $"CreateRefinancingSimulationRequest {{ Cpf = {Masking.Cpf(Cpf)}, LicensePlate = {Masking.Hidden}, RequestedAmount = {RequestedAmount}, StoreCnpj = {StoreCnpj} }}";
+        $"CreateRefinancingSimulationRequest {{ Cpf = {Masking.Cpf(Cpf)}, LicensePlate = {Masking.Hidden}, RequestedAmount = {RequestedAmount}, StoreCnpj = {StoreCnpj}, CommissionReturn = {CommissionReturn} }}";
 }
