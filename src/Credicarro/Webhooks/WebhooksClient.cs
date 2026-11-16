@@ -62,22 +62,6 @@ internal sealed class WebhooksClient(HttpClient httpClient) : IWebhooksClient
         return PagedResultMapper.ToPublic(wire, WebhookMapper.ToPublic);
     }
 
-    public async Task<IReadOnlyList<WebhookDeliveryChartPoint>> GetDeliveryChartAsync(
-        WebhookDeliveryFilter filter,
-        CancellationToken cancellationToken = default)
-    {
-        if (filter is null)
-            throw new ArgumentNullException(nameof(filter));
-        if (filter.InitialDate is null || filter.FinalDate is null)
-            throw new ArgumentException("InitialDate e FinalDate são obrigatórios no gráfico de envios.", nameof(filter));
-
-        var path = WebhookMapper.AddFilter(new QueryStringBuilder(), filter).Build("v1/webhook/audit/chart");
-        var wire = await ApiTransport
-            .GetAsync<List<WebhookDeliveryChartPointWire>>(httpClient, path, cancellationToken)
-            .ConfigureAwait(false);
-        return wire.Select(WebhookMapper.ToPublic).ToList();
-    }
-
     public async Task<WebhookResendResult> ResendAsync(Guid deliveryId, CancellationToken cancellationToken = default)
     {
         var wire = await ApiTransport

@@ -36,11 +36,6 @@ internal sealed record WebhookDeliveryWire(
     [property: JsonPropertyName("status_http")] int? StatusHttp,
     [property: JsonPropertyName("data_criacao")] DateTimeOffset DataCriacao);
 
-internal sealed record WebhookDeliveryChartPointWire(
-    [property: JsonPropertyName("rotulo")] string? Rotulo,
-    [property: JsonPropertyName("sucessos")] int Sucessos,
-    [property: JsonPropertyName("erros")] int Erros);
-
 internal sealed record WebhookResendResponseWire(
     [property: JsonPropertyName("status_http")] int? StatusHttp,
     [property: JsonPropertyName("resposta")] string? Resposta);

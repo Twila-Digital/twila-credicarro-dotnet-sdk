@@ -59,9 +59,6 @@ internal static class WebhookMapper
         wire.StatusHttp,
         wire.DataCriacao);
 
-    public static WebhookDeliveryChartPoint ToPublic(WebhookDeliveryChartPointWire wire) =>
-        new(wire.Rotulo ?? string.Empty, wire.Sucessos, wire.Erros);
-
     public static WebhookResendResult ToPublic(WebhookResendResponseWire wire) =>
         new(wire.StatusHttp, wire.Resposta ?? string.Empty);
 

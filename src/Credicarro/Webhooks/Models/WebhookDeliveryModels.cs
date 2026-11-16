@@ -3,8 +3,7 @@ namespace Credicarro.Webhooks.Models;
 #pragma warning disable S3996
 
 /// <summary>
-/// Filtros do histórico e do gráfico de envios. Valores <see langword="null"/> não são enviados.
-/// No gráfico, <see cref="InitialDate"/> e <see cref="FinalDate"/> são obrigatórios e o período pode ter até 31 dias.
+/// Filtros do histórico de envios. Valores <see langword="null"/> não são enviados.
 /// </summary>
 /// <param name="InitialDate">Início do período (<c>data_inicial</c>).</param>
 /// <param name="FinalDate">Fim do período (<c>data_final</c>).</param>
@@ -45,14 +44,6 @@ public sealed record WebhookDelivery(
     public override string ToString() =>
         $"WebhookDelivery {{ Id = {Id}, WebhookId = {WebhookId}, Type = {Type}, StatusCode = {StatusCode}, CreatedAt = {CreatedAt:o}, Request = ***, Response = *** }}";
 }
-
-/// <summary>
-/// Contagem de envios em um intervalo do gráfico, no horário de Brasília.
-/// </summary>
-/// <param name="Label">Início do intervalo (<c>rotulo</c>): <c>10m</c> (10 minutos), <c>14h</c> (hora) ou <c>05</c> (dia), conforme o período.</param>
-/// <param name="SuccessCount">Envios com sucesso (<c>sucessos</c>).</param>
-/// <param name="ErrorCount">Envios com erro (<c>erros</c>).</param>
-public sealed record WebhookDeliveryChartPoint(string Label, int SuccessCount, int ErrorCount);
 
 /// <summary>
 /// Resultado imediato do reenvio.

@@ -71,7 +71,6 @@ public sealed class WireContractTests(OpenApiSchemaFixture fixture)
         yield return Case(typeof(PagedResultWire<WebhookWire>), "get", "/v1/webhook", Response);
         yield return Case(typeof(UpdateWebhookRequestWire), "put", "/v1/webhook/{webhookId}", Request);
         yield return Case(typeof(PagedResultWire<WebhookDeliveryWire>), "get", "/v1/webhook/audit", Response);
-        yield return Case(typeof(List<WebhookDeliveryChartPointWire>), "get", "/v1/webhook/audit/chart", Response);
         yield return Case(typeof(WebhookResendResponseWire), "post", "/v1/webhook/audit/{auditWebhookId}/resend", Response);
     }
 
@@ -146,7 +145,6 @@ public sealed class WireContractTests(OpenApiSchemaFixture fixture)
         "put /v1/webhook/{webhookId}",
         "delete /v1/webhook/{webhookId}",
         "get /v1/webhook/audit",
-        "get /v1/webhook/audit/chart",
         "post /v1/webhook/audit/{auditWebhookId}/resend",
         "get /v2/proposal/simulation/commission-returns"
     ];
@@ -161,7 +159,6 @@ public sealed class WireContractTests(OpenApiSchemaFixture fixture)
     [InlineData("get", "/v1/webhook", new[] { "pagina_inicial", "limite" })]
     [InlineData("get", "/v2/proposal/simulation/commission-returns", new[] { "cnpjLoja" })]
     [InlineData("get", "/v1/webhook/audit", new[] { "data_inicial", "data_final", "id_proposta", "id_simulacao", "numero_proposta", "status_http", "pagina_inicial", "limite" })]
-    [InlineData("get", "/v1/webhook/audit/chart", new[] { "data_inicial", "data_final", "id_proposta", "id_simulacao", "numero_proposta", "status_http" })]
     public void QueryParametersUsedBySdkAreDeclared(string method, string path, string[] expected)
     {
         var declared = fixture.Document.Parameters(method, path).Where(parameter => parameter.In == "query").Select(parameter => parameter.Name).ToArray();

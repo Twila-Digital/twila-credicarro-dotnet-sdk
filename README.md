@@ -166,7 +166,7 @@ A `Idempotency-Key` é **obrigatória** nesta rota. Gere uma chave **por envio**
 | `client.Customers` | `UpsertAsync` (`POST v1/customer/unified`), `CreateAsync`, `UpsertAddressAsync`, `UpsertProfessionalDataAsync` |
 | `client.Simulations` | `GetFinancingRangeAsync`, `GetRefinancingRangeAsync`, `GetCommissionReturnsAsync`, `CreateFinancingAsync`, `CreateRefinancingAsync`, `GetAsync`, `ListAsync` |
 | `client.Proposals` | `CreateAsync`, `GetAsync`, `ListAsync`, `SendVehicleDetailsAsync`, `SendDepositAccountAsync`, `UploadDocumentAsync` |
-| `client.Webhooks` | `CreateAsync`, `ListAsync`, `UpdateAsync`, `DeleteAsync`, `ListDeliveriesAsync`, `GetDeliveryChartAsync`, `ResendAsync` |
+| `client.Webhooks` | `CreateAsync`, `ListAsync`, `UpdateAsync`, `DeleteAsync`, `ListDeliveriesAsync`, `ResendAsync` |
 | `client.V1.Simulations` | `GetFinancingRangeAsync(placa)`, `GetRefinancingRangeAsync(placa)`, `CreateFinancingAsync`, `CreateRefinancingAsync` (rotas v1, sem `cnpjLoja`) |
 | `client.V1.Proposals` | `CreateAsync` (`POST v1/proposal`), `GetAsync` (`GET v1/proposal/{id}`, formato resumido) |
 | `CredicarroWebhookEvent` | `Parse`, `VerifySignature`, `VerifyAuthorization` (estático, para o seu endpoint de webhook) |
@@ -272,7 +272,7 @@ var webhook = await client.Webhooks.CreateAsync(new CreateWebhookRequest(
 // webhook.WebhookId e webhook.SigningSecret
 ```
 
-Histórico, gráfico e reenvio:
+Histórico e reenvio:
 
 ```csharp
 var semana = new WebhookDeliveryFilter(
@@ -281,9 +281,6 @@ var semana = new WebhookDeliveryFilter(
 
 // Envios que falharam (filtros opcionais)
 var falhas = await client.Webhooks.ListDeliveriesAsync(semana with { StatusCode = 500 });
-
-// Sucessos e erros por intervalo (período obrigatório, até 31 dias; rótulos no horário de Brasília)
-var grafico = await client.Webhooks.GetDeliveryChartAsync(semana);
 
 // Reenvia o mesmo corpo para a sua URL depois de corrigir a falha
 var resultado = await client.Webhooks.ResendAsync(falhas.Items[0].Id);

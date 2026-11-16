@@ -94,49 +94,6 @@ public class WebhookDeliveriesTests
     }
 
     [Fact]
-    public async Task GetDeliveryChartAsync_EnviaOPeriodo_EMapeiaOsPontos()
-    {
-        var inner = RespondWith("""[ { "rotulo": "04", "sucessos": 42, "erros": 0 }, { "rotulo": "05", "sucessos": 38, "erros": 3 } ]""");
-
-        var points = await CreateWebhooks(inner).GetDeliveryChartAsync(new WebhookDeliveryFilter(
-            new DateTimeOffset(2026, 11, 4, 0, 0, 0, TimeSpan.Zero),
-            new DateTimeOffset(2026, 11, 5, 23, 59, 59, TimeSpan.Zero),
-            ProposalId: WebhookId));
-
-        var request = inner.Requests.Single();
-        Assert.Equal("/integration/v1/webhook/audit/chart", request.Path);
-        var query = Query(request.Uri.Query);
-        Assert.NotNull(query["data_inicial"]);
-        Assert.NotNull(query["data_final"]);
-        Assert.Equal(WebhookId.ToString(), query["id_proposta"]);
-        Assert.Equal([new WebhookDeliveryChartPoint("04", 42, 0), new WebhookDeliveryChartPoint("05", 38, 3)], points);
-    }
-
-    [Fact]
-    public async Task GetDeliveryChartAsync_SemPeriodo_LancaArgumentException_SemChamarAApi()
-    {
-        var inner = RespondWith("[]");
-
-        await Assert.ThrowsAsync<ArgumentException>(
-            () => CreateWebhooks(inner).GetDeliveryChartAsync(new WebhookDeliveryFilter(InitialDate: DateTimeOffset.UtcNow)));
-
-        Assert.Equal(0, inner.CallCount);
-    }
-
-    [Fact]
-    public async Task GetDeliveryChartAsync_PeriodoMaiorQue31Dias_LancaValidationException()
-    {
-        var inner = RespondWith(
-            """{ "tipo": "Organization.Webhook.Audit.DateRangeTooLarge", "titulo": "Requisição inválida", "status": 400 }""",
-            HttpStatusCode.BadRequest);
-
-        var error = await Assert.ThrowsAsync<CredicarroValidationException>(
-            () => CreateWebhooks(inner).GetDeliveryChartAsync(new WebhookDeliveryFilter(DateTimeOffset.UtcNow.AddDays(-60), DateTimeOffset.UtcNow)));
-
-        Assert.Equal("Organization.Webhook.Audit.DateRangeTooLarge", error.ErrorCode);
-    }
-
-    [Fact]
     public async Task ResendAsync_EnviaPostSemCorpoESemIdempotencyKey_EDevolveOResultado()
     {
         var inner = RespondWith("""{ "status_http": null, "resposta": "" }""");
