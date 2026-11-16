@@ -64,14 +64,42 @@ internal static class ResiliencePipelineFactory
         && request.Method == HttpMethod.Post
         && ApiRoutes.IsDocumentUpload(ApiRoutes.GetApiPath(request));
 
-    private static TimeSpan GetAttemptTimeout(ResilienceContext context, CredicarroResilienceOptions options) =>
-        IsDocumentUpload(context) ? options.DocumentUploadAttemptTimeout : options.AttemptTimeout;
+    /// <summary>O reenvio de webhook espera a resposta da URL do integrador (até 15 s do lado da Credicarro).</summary>
+    private static readonly TimeSpan WebhookResendMinimumTimeout = TimeSpan.FromSeconds(30);
+
+    private static bool IsWebhookResend(ResilienceContext context) =>
+        context.Properties.TryGetValue(ResilienceContextRequestKey.Key, out var request)
+        && request is not null
+        && request.Method == HttpMethod.Post
+        && ApiRoutes.IsWebhookResend(ApiRoutes.GetApiPath(request));
+
+    private static TimeSpan GetAttemptTimeout(ResilienceContext context, CredicarroResilienceOptions options)
+    {
+        if (IsDocumentUpload(context))
+            return options.DocumentUploadAttemptTimeout;
+
+        if (IsWebhookResend(context))
+            return Max(options.AttemptTimeout, WebhookResendMinimumTimeout);
+
+        return options.AttemptTimeout;
+    }
 
     /// <summary>
-    /// Orçamento total da chamada: <c>TotalTimeout</c>; no envio de documento, <c>DocumentUploadAttemptTimeout × MaxRetryAttempts</c>.
+    /// Orçamento total da chamada: <c>TotalTimeout</c>; no envio de documento, <c>DocumentUploadAttemptTimeout × MaxRetryAttempts</c>;
+    /// no reenvio de webhook (uma única tentativa), pelo menos o timeout da tentativa.
     /// </summary>
-    private static TimeSpan GetTotalTimeout(ResilienceContext context, CredicarroResilienceOptions options) =>
-        IsDocumentUpload(context) ? UploadBudget(options) : options.TotalTimeout;
+    private static TimeSpan GetTotalTimeout(ResilienceContext context, CredicarroResilienceOptions options)
+    {
+        if (IsDocumentUpload(context))
+            return UploadBudget(options);
+
+        if (IsWebhookResend(context))
+            return Max(options.TotalTimeout, GetAttemptTimeout(context, options));
+
+        return options.TotalTimeout;
+    }
+
+    private static TimeSpan Max(TimeSpan first, TimeSpan second) => first > second ? first : second;
 
     private static TimeSpan UploadBudget(CredicarroResilienceOptions options) =>
         TimeSpan.FromTicks(options.DocumentUploadAttemptTimeout.Ticks * Math.Max(1, options.MaxRetryAttempts));
@@ -79,7 +107,8 @@ internal static class ResiliencePipelineFactory
     private static TimeSpan MaxBudget(CredicarroResilienceOptions options)
     {
         var upload = UploadBudget(options);
-        return upload > options.TotalTimeout ? upload : options.TotalTimeout;
+        var budget = upload > options.TotalTimeout ? upload : options.TotalTimeout;
+        return Max(budget, WebhookResendMinimumTimeout);
     }
 
     /// <summary>Quanto resta do orçamento total da chamada lógica (nunca negativo).</summary>

@@ -101,6 +101,18 @@ foreach (var acao in proposta.GetPendingActions())
 
 Para refinanciamento use `GetRefinancingRangeAsync` e `CreateRefinancingAsync` (com `RequestedAmount` dentro da faixa da placa). O refinanciamento ainda pede a conta de recebimento (`SendDepositAccountAsync`).
 
+**Retorno de comissão (opcional).** Consulte as faixas da loja e envie `CommissionReturn` (último parâmetro de `CreateFinancingSimulationRequest`/`CreateRefinancingSimulationRequest`) dentro da faixa da modalidade, com `Target` `CommissionReturnTarget.Store`:
+
+```csharp
+var faixas = await client.Simulations.GetCommissionReturnsAsync("11.222.333/0001-81"); // vazio se a loja não tiver retorno
+var faixa = faixas.FirstOrDefault(f => f.Type == SimulationType.Financing && f.Target == CommissionReturnTarget.Store);
+
+var opcoes = await client.Simulations.CreateFinancingAsync(
+    new CreateFinancingSimulationRequest(cpf, "ABC1D23", 45000m, 5000m, "SP", false, "11222333000181", faixa?.MaximumReturn));
+```
+
+Fora da faixa, a API retorna `422 Store.CommissionReturn.OutOfRange`; sem faixa configurada, `422 Store.CommissionReturn.NotConfigured`. `null` não é enviado, e as rotas v1 não aceitam o campo.
+
 ### O que enviar: `GetPendingActions()`
 
 `ProposalDetails.GetPendingActions()` olha cada participante (comprador, vendedor e loja) e lista só o que cabe ao integrador, isto é, quando a etapa ativa tem `ActionOwner == Integrator`:
@@ -152,9 +164,9 @@ A `Idempotency-Key` é **obrigatória** nesta rota. Gere uma chave **por envio**
 | Cliente | Métodos |
 | --- | --- |
 | `client.Customers` | `UpsertAsync` (`POST v1/customer/unified`), `CreateAsync`, `UpsertAddressAsync`, `UpsertProfessionalDataAsync` |
-| `client.Simulations` | `GetFinancingRangeAsync`, `GetRefinancingRangeAsync`, `CreateFinancingAsync`, `CreateRefinancingAsync`, `GetAsync`, `ListAsync` |
+| `client.Simulations` | `GetFinancingRangeAsync`, `GetRefinancingRangeAsync`, `GetCommissionReturnsAsync`, `CreateFinancingAsync`, `CreateRefinancingAsync`, `GetAsync`, `ListAsync` |
 | `client.Proposals` | `CreateAsync`, `GetAsync`, `ListAsync`, `SendVehicleDetailsAsync`, `SendDepositAccountAsync`, `UploadDocumentAsync` |
-| `client.Webhooks` | `CreateAsync`, `ListAsync`, `UpdateAsync`, `DeleteAsync` |
+| `client.Webhooks` | `CreateAsync`, `ListAsync`, `UpdateAsync`, `DeleteAsync`, `ListDeliveriesAsync`, `GetDeliveryChartAsync`, `ResendAsync` |
 | `client.V1.Simulations` | `GetFinancingRangeAsync(placa)`, `GetRefinancingRangeAsync(placa)`, `CreateFinancingAsync`, `CreateRefinancingAsync` (rotas v1, sem `cnpjLoja`) |
 | `client.V1.Proposals` | `CreateAsync` (`POST v1/proposal`), `GetAsync` (`GET v1/proposal/{id}`, formato resumido) |
 | `CredicarroWebhookEvent` | `Parse`, `VerifySignature`, `VerifyAuthorization` (estático, para o seu endpoint de webhook) |
@@ -176,6 +188,7 @@ O SDK gera uma `Idempotency-Key` (UUID) **por chamada lógica** e a repete em **
 | `Webhooks.UpdateAsync`, `DeleteAsync` | Sem chave | Sim |
 | **`Customers.UpsertAsync`** (`POST v1/customer/unified`) | **Nunca automática** | **Só se você passar `idempotencyKey`** |
 | `Webhooks.CreateAsync` | Sem chave | **Não** (repetir cadastraria o webhook de novo) |
+| `Webhooks.ResendAsync` | Sem chave | **Não** (repetir dispararia o webhook de novo); espera até 30 s pela sua URL |
 
 > **Atenção ao `Customers.UpsertAsync`.** A chave muda o comportamento da rota. **Sem** `idempotencyKey` (o padrão), ela cria o cliente ou atualiza o cadastro se o CPF já existir (upsert), e por isso uma falha de rede **não é repetida** pelo SDK. **Com** `idempotencyKey`, ela só cria: se o CPF já estiver cadastrado, responde `409` (`Cpf.CpfAlreadyAdded`), e o SDK repete a chamada com a mesma chave. Para atualizar um cliente existente, não passe a chave.
 
@@ -201,7 +214,7 @@ Circuit breaker: abre com 50% de falhas em 30 s (mínimo de 10 chamadas) e fica 
 
 ## Paginação
 
-`Simulations.ListAsync`, `Proposals.ListAsync` e `Webhooks.ListAsync` retornam `PagedResult<T>` e não têm auto-paginação: você controla o avanço de página. `Page` começa em 1 e `PageSize` vai de 1 a 100 (validado no cliente, antes de chamar a API).
+`Simulations.ListAsync`, `Proposals.ListAsync`, `Webhooks.ListAsync` e `Webhooks.ListDeliveriesAsync` retornam `PagedResult<T>` e não têm auto-paginação: você controla o avanço de página. `Page` começa em 1 e `PageSize` vai de 1 a 100 (validado no cliente, antes de chamar a API).
 
 ```csharp
 var pagina = await client.Proposals.ListAsync(new ListRequest(Page: 1, PageSize: 20));
@@ -258,6 +271,25 @@ var webhook = await client.Webhooks.CreateAsync(new CreateWebhookRequest(
 
 // webhook.WebhookId e webhook.SigningSecret
 ```
+
+Histórico, gráfico e reenvio:
+
+```csharp
+var semana = new WebhookDeliveryFilter(
+    InitialDate: new DateTimeOffset(2026, 11, 1, 0, 0, 0, TimeSpan.FromHours(-3)),
+    FinalDate: new DateTimeOffset(2026, 11, 7, 23, 59, 59, TimeSpan.FromHours(-3)));
+
+// Envios que falharam (filtros opcionais)
+var falhas = await client.Webhooks.ListDeliveriesAsync(semana with { StatusCode = 500 });
+
+// Sucessos e erros por intervalo (período obrigatório, até 31 dias; rótulos no horário de Brasília)
+var grafico = await client.Webhooks.GetDeliveryChartAsync(semana);
+
+// Reenvia o mesmo corpo para a sua URL depois de corrigir a falha
+var resultado = await client.Webhooks.ResendAsync(falhas.Items[0].Id);
+```
+
+O reenvio chega com uma `Idempotency-Key` nova (`{id_mensagem}:{id_webhook}:{id_tentativa}`); para tratá-lo como a mesma notificação, deduplique pelo prefixo `{id_mensagem}:{id_webhook}`. `StatusCode` vem `null` quando a sua URL não respondeu.
 
 No seu endpoint, leia o **corpo bruto** (antes de desserializar) e valide a assinatura do header `X-CrediCarro-Signature`:
 

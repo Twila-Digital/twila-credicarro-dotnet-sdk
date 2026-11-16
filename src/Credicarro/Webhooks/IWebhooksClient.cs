@@ -24,4 +24,29 @@ public interface IWebhooksClient
 
     /// <summary>Exclui o webhook (<c>DELETE v1/webhook/{id}</c>, resposta <c>204</c>).</summary>
     Task DeleteAsync(Guid webhookId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Histórico de envios, com o corpo enviado, a resposta da sua URL e o status HTTP (<c>GET v1/webhook/audit</c>).
+    /// Todos os filtros são opcionais.
+    /// </summary>
+    Task<PagedResult<WebhookDelivery>> ListDeliveriesAsync(
+        WebhookDeliveryFilter? filter = null,
+        ListRequest? paging = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Sucessos e erros por intervalo, no horário de Brasília (<c>GET v1/webhook/audit/chart</c>).
+    /// <see cref="WebhookDeliveryFilter.InitialDate"/> e <see cref="WebhookDeliveryFilter.FinalDate"/> são obrigatórios,
+    /// e o período pode ter até 31 dias.
+    /// </summary>
+    Task<IReadOnlyList<WebhookDeliveryChartPoint>> GetDeliveryChartAsync(
+        WebhookDeliveryFilter filter,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Reenvia para a sua URL o mesmo corpo de um envio do histórico (<c>POST v1/webhook/audit/{id}/resend</c>). É uma única
+    /// tentativa, <b>não repetida automaticamente</b> (repetir dispararia o webhook de novo), com até 30 s de espera pela sua
+    /// URL. O reenvio chega com uma <c>Idempotency-Key</c> nova (<c>{id_mensagem}:{id_webhook}:{id_tentativa}</c>).
+    /// </summary>
+    Task<WebhookResendResult> ResendAsync(Guid deliveryId, CancellationToken cancellationToken = default);
 }

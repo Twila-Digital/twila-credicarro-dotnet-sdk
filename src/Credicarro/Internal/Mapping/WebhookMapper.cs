@@ -1,3 +1,4 @@
+using Credicarro.Http;
 using Credicarro.Internal.Generated.Webhooks;
 using Credicarro.Proposals.Models;
 using Credicarro.Serialization;
@@ -48,6 +49,32 @@ internal static class WebhookMapper
         wire.Url ?? string.Empty,
         EnumMapping.FromWireName<WebhookAuthenticationType>(wire.TipoAutenticacao),
         EnumMapping.FromWireName<WebhookStatus>(wire.Status));
+
+    public static WebhookDelivery ToPublic(WebhookDeliveryWire wire) => new(
+        wire.IdAuditoria,
+        wire.IdWebhook,
+        EnumMapping.FromWireName<WebhookType>(wire.Tipo),
+        wire.Requisicao ?? string.Empty,
+        wire.Resposta ?? string.Empty,
+        wire.StatusHttp,
+        wire.DataCriacao);
+
+    public static WebhookDeliveryChartPoint ToPublic(WebhookDeliveryChartPointWire wire) =>
+        new(wire.Rotulo ?? string.Empty, wire.Sucessos, wire.Erros);
+
+    public static WebhookResendResult ToPublic(WebhookResendResponseWire wire) =>
+        new(wire.StatusHttp, wire.Resposta ?? string.Empty);
+
+    public static QueryStringBuilder AddFilter(QueryStringBuilder query, WebhookDeliveryFilter? filter) =>
+        filter is null
+            ? query
+            : query
+                .Add("data_inicial", filter.InitialDate)
+                .Add("data_final", filter.FinalDate)
+                .Add("id_proposta", filter.ProposalId)
+                .Add("id_simulacao", filter.SimulationId)
+                .Add("numero_proposta", filter.ProposalNumber)
+                .Add("status_http", filter.StatusCode);
 
     public static ProposalWebhookEvent ToPublic(ProposalWebhookEventWire wire)
     {
