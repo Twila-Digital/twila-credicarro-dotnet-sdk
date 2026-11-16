@@ -104,14 +104,14 @@ Para refinanciamento use `GetRefinancingRangeAsync` e `CreateRefinancingAsync` (
 **Retorno de comissão (opcional).** Consulte as faixas da loja e envie `CommissionReturn` (último parâmetro de `CreateFinancingSimulationRequest`/`CreateRefinancingSimulationRequest`) dentro da faixa da modalidade, com `Target` `CommissionReturnTarget.Store`:
 
 ```csharp
-var faixas = await client.Simulations.GetCommissionReturnsAsync("11.222.333/0001-81"); // vazio se a loja não tiver retorno
+var faixas = await client.Simulations.GetCommissionReturnsAsync("11.222.333/0001-81");
 var faixa = faixas.FirstOrDefault(f => f.Type == SimulationType.Financing && f.Target == CommissionReturnTarget.Store);
 
 var opcoes = await client.Simulations.CreateFinancingAsync(
     new CreateFinancingSimulationRequest(cpf, "ABC1D23", 45000m, 5000m, "SP", false, "11222333000181", faixa?.MaximumReturn));
 ```
 
-Fora da faixa, a API retorna `422 Store.CommissionReturn.OutOfRange`; sem faixa configurada, `422 Store.CommissionReturn.NotConfigured`. `null` não é enviado, e as rotas v1 não aceitam o campo.
+Lista vazia significa loja sem retorno configurado. Fora da faixa, a API retorna `422 Store.CommissionReturn.OutOfRange`; sem faixa configurada, `422 Store.CommissionReturn.NotConfigured`. `null` não é enviado, e as rotas v1 não aceitam o campo.
 
 ### O que enviar: `GetPendingActions()`
 
@@ -279,14 +279,12 @@ var semana = new WebhookDeliveryFilter(
     InitialDate: new DateTimeOffset(2026, 11, 1, 0, 0, 0, TimeSpan.FromHours(-3)),
     FinalDate: new DateTimeOffset(2026, 11, 7, 23, 59, 59, TimeSpan.FromHours(-3)));
 
-// Envios que falharam (filtros opcionais)
 var falhas = await client.Webhooks.ListDeliveriesAsync(semana with { StatusCode = 500 });
 
-// Reenvia o mesmo corpo para a sua URL depois de corrigir a falha
 var resultado = await client.Webhooks.ResendAsync(falhas.Items[0].Id);
 ```
 
-O reenvio chega com uma `Idempotency-Key` nova (`{id_mensagem}:{id_webhook}:{id_tentativa}`); para tratá-lo como a mesma notificação, deduplique pelo prefixo `{id_mensagem}:{id_webhook}`. `StatusCode` vem `null` quando a sua URL não respondeu.
+Os filtros do histórico são opcionais. O reenvio manda o mesmo corpo e chega com uma `Idempotency-Key` nova (`{id_mensagem}:{id_webhook}:{id_tentativa}`); para tratá-lo como a mesma notificação, deduplique pelo prefixo `{id_mensagem}:{id_webhook}`. `StatusCode` vem `null` quando a sua URL não respondeu.
 
 No seu endpoint, leia o **corpo bruto** (antes de desserializar) e valide a assinatura do header `X-CrediCarro-Signature`:
 
