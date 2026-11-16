@@ -24,13 +24,25 @@ internal sealed record CreateFinancingSimulationRequestWire(
     [property: JsonPropertyName("valorEntrada")] decimal ValorEntrada,
     [property: JsonPropertyName("uf")] string Uf,
     [property: JsonPropertyName("isVeiculoZeroKm")] bool IsVeiculoZeroKm,
-    [property: JsonPropertyName("cnpjLoja")] string CnpjLoja);
+    [property: JsonPropertyName("cnpjLoja")] string CnpjLoja,
+    [property: JsonPropertyName("retornoComissao")] int? RetornoComissao);
 
 internal sealed record CreateRefinancingSimulationRequestWire(
     [property: JsonPropertyName("cpf")] string Cpf,
     [property: JsonPropertyName("placa")] string Placa,
     [property: JsonPropertyName("valorSolicitado")] decimal ValorSolicitado,
-    [property: JsonPropertyName("cnpjLoja")] string CnpjLoja);
+    [property: JsonPropertyName("cnpjLoja")] string CnpjLoja,
+    [property: JsonPropertyName("retornoComissao")] int? RetornoComissao);
+
+internal sealed record CommissionReturnsResponseWire(
+    [property: JsonPropertyName("retornos_comissao")] IReadOnlyList<CommissionReturnWire>? RetornosComissao);
+
+internal sealed record CommissionReturnWire(
+    [property: JsonPropertyName("tipo")] string? Tipo,
+    [property: JsonPropertyName("alvo")] string? Alvo,
+    [property: JsonPropertyName("retorno_minimo")] int RetornoMinimo,
+    [property: JsonPropertyName("retorno_maximo")] int RetornoMaximo,
+    [property: JsonPropertyName("permite_taxa_padrao")] bool PermiteTaxaPadrao);
 
 internal sealed record CreateFinancingSimulationV1RequestWire(
     [property: JsonPropertyName("cpf")] string Cpf,

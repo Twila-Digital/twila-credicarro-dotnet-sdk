@@ -46,4 +46,30 @@ internal sealed class WebhooksClient(HttpClient httpClient) : IWebhooksClient
             httpClient,
             ApiTransport.CreateRequest(HttpMethod.Delete, $"v1/webhook/{webhookId}"),
             cancellationToken);
+
+    public async Task<PagedResult<WebhookDelivery>> ListDeliveriesAsync(
+        WebhookDeliveryFilter? filter = null,
+        ListRequest? paging = null,
+        CancellationToken cancellationToken = default)
+    {
+        var pagedPath = (paging ?? new ListRequest()).ToPath("v1/webhook/audit");
+        var filterQuery = WebhookMapper.AddFilter(new QueryStringBuilder(), filter).Build(string.Empty);
+        var path = filterQuery.Length == 0 ? pagedPath : pagedPath + "&" + filterQuery.Substring(1);
+
+        var wire = await ApiTransport
+            .GetAsync<PagedResultWire<WebhookDeliveryWire>>(httpClient, path, cancellationToken)
+            .ConfigureAwait(false);
+        return PagedResultMapper.ToPublic(wire, WebhookMapper.ToPublic);
+    }
+
+    public async Task<WebhookResendResult> ResendAsync(Guid deliveryId, CancellationToken cancellationToken = default)
+    {
+        var wire = await ApiTransport
+            .SendAsync<WebhookResendResponseWire>(
+                httpClient,
+                ApiTransport.CreateRequest(HttpMethod.Post, $"v1/webhook/audit/{deliveryId}/resend"),
+                cancellationToken)
+            .ConfigureAwait(false);
+        return WebhookMapper.ToPublic(wire);
+    }
 }

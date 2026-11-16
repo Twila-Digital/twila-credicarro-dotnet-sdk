@@ -64,6 +64,19 @@ internal static class ApiRoutes
     public static bool IsReplaceSemantics(string path) =>
         IsProposalAction(path, "vehicle-detail") || IsProposalAction(path, "deposit-account");
 
+    /// <summary><c>POST v1/webhook/audit/{id}/resend</c></summary>
+    public static bool IsWebhookResend(string path)
+    {
+        var segments = path.Split('/');
+
+        return segments.Length == 5
+            && string.Equals(segments[0], "v1", StringComparison.OrdinalIgnoreCase)
+            && string.Equals(segments[1], "webhook", StringComparison.OrdinalIgnoreCase)
+            && string.Equals(segments[2], "audit", StringComparison.OrdinalIgnoreCase)
+            && segments[3].Length > 0
+            && string.Equals(segments[4], "resend", StringComparison.OrdinalIgnoreCase);
+    }
+
     /// <summary><c>PUT/DELETE v1/webhook/{id}</c></summary>
     public static bool IsWebhookResource(string path)
     {

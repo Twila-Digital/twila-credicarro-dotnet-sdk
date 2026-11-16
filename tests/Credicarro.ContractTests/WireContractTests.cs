@@ -40,6 +40,7 @@ public sealed class WireContractTests(OpenApiSchemaFixture fixture)
 
         yield return Case(typeof(FinancingRangeResponseWire), "get", "/v2/proposal/simulation/range/financing", Response);
         yield return Case(typeof(RefinancingRangeResponseWire), "get", "/v2/proposal/simulation/range/refinancing", Response);
+        yield return Case(typeof(CommissionReturnsResponseWire), "get", "/v2/proposal/simulation/commission-returns", Response);
         yield return Case(typeof(CreateFinancingSimulationRequestWire), "post", "/v2/proposal/simulation/financing", Request);
         yield return Case(typeof(SimulationListResponseWire), "post", "/v2/proposal/simulation/financing", Response);
         yield return Case(typeof(CreateRefinancingSimulationRequestWire), "post", "/v2/proposal/simulation/refinancing", Request);
@@ -69,6 +70,8 @@ public sealed class WireContractTests(OpenApiSchemaFixture fixture)
         yield return Case(typeof(CreateWebhookResponseWire), "post", "/v1/webhook", Response);
         yield return Case(typeof(PagedResultWire<WebhookWire>), "get", "/v1/webhook", Response);
         yield return Case(typeof(UpdateWebhookRequestWire), "put", "/v1/webhook/{webhookId}", Request);
+        yield return Case(typeof(PagedResultWire<WebhookDeliveryWire>), "get", "/v1/webhook/audit", Response);
+        yield return Case(typeof(WebhookResendResponseWire), "post", "/v1/webhook/audit/{auditWebhookId}/resend", Response);
     }
 
     private static object[] Case(Type wireType, string method, string path, string direction) =>
@@ -83,6 +86,12 @@ public sealed class WireContractTests(OpenApiSchemaFixture fixture)
 
         var schema = direction == Request ? document.RequestSchema(method, path) : document.ResponseSchema(method, path);
         Assert.True(schema is not null, $"{method.ToUpperInvariant()} {path} não declara schema de {direction} em application/json.");
+
+        if (NestedWireType(wireType, out var isTopLevelArray) is { } element && isTopLevelArray)
+        {
+            schema = document.Items(schema);
+            wireType = element;
+        }
 
         var errors = new List<string>();
         Compare(document, wireType, schema, direction == Request, wireType.Name, errors);
@@ -134,7 +143,10 @@ public sealed class WireContractTests(OpenApiSchemaFixture fixture)
         "post /v1/webhook",
         "get /v1/webhook",
         "put /v1/webhook/{webhookId}",
-        "delete /v1/webhook/{webhookId}"
+        "delete /v1/webhook/{webhookId}",
+        "get /v1/webhook/audit",
+        "post /v1/webhook/audit/{auditWebhookId}/resend",
+        "get /v2/proposal/simulation/commission-returns"
     ];
 
     [Theory]
@@ -145,6 +157,8 @@ public sealed class WireContractTests(OpenApiSchemaFixture fixture)
     [InlineData("get", "/v1/proposal", new[] { "pagina_inicial", "limite" })]
     [InlineData("get", "/v1/proposal/simulation", new[] { "pagina_inicial", "limite" })]
     [InlineData("get", "/v1/webhook", new[] { "pagina_inicial", "limite" })]
+    [InlineData("get", "/v2/proposal/simulation/commission-returns", new[] { "cnpjLoja" })]
+    [InlineData("get", "/v1/webhook/audit", new[] { "data_inicial", "data_final", "id_proposta", "id_simulacao", "numero_proposta", "status_http", "pagina_inicial", "limite" })]
     public void QueryParametersUsedBySdkAreDeclared(string method, string path, string[] expected)
     {
         var declared = fixture.Document.Parameters(method, path).Where(parameter => parameter.In == "query").Select(parameter => parameter.Name).ToArray();

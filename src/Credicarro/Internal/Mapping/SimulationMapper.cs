@@ -25,7 +25,8 @@ internal static class SimulationMapper
             request.DownPayment,
             request.State,
             request.IsZeroKm,
-            request.StoreCnpj);
+            request.StoreCnpj,
+            request.CommissionReturn);
     }
 
     public static CreateFinancingSimulationV1RequestWire ToWire(CreateFinancingSimulationV1Request request)
@@ -47,8 +48,20 @@ internal static class SimulationMapper
         if (request is null)
             throw new ArgumentNullException(nameof(request));
 
-        return new CreateRefinancingSimulationRequestWire(request.Cpf, request.LicensePlate, request.RequestedAmount, request.StoreCnpj);
+        return new CreateRefinancingSimulationRequestWire(
+            request.Cpf,
+            request.LicensePlate,
+            request.RequestedAmount,
+            request.StoreCnpj,
+            request.CommissionReturn);
     }
+
+    public static CommissionReturn ToPublic(CommissionReturnWire wire) => new(
+        EnumMapping.FromWireName<SimulationType>(wire.Tipo),
+        EnumMapping.FromWireName<CommissionReturnTarget>(wire.Alvo),
+        wire.RetornoMinimo,
+        wire.RetornoMaximo,
+        wire.PermiteTaxaPadrao);
 
     public static CreateRefinancingSimulationV1RequestWire ToWire(CreateRefinancingSimulationV1Request request)
     {

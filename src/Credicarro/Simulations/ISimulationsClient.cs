@@ -15,6 +15,12 @@ public interface ISimulationsClient
     Task<IReadOnlyList<RefinancingRangeOption>> GetRefinancingRangeAsync(string licensePlate, string storeCnpj, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Faixas de retorno de comissão da loja (<c>GET v2/proposal/simulation/commission-returns</c>). Lista vazia quando a loja
+    /// não tem retorno configurado. A simulação valida pela faixa com <see cref="CommissionReturnTarget.Store"/>.
+    /// </summary>
+    Task<IReadOnlyList<CommissionReturn>> GetCommissionReturnsAsync(string storeCnpj, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Simula um financiamento (<c>POST v2/proposal/simulation/financing</c>); devolve uma opção por prazo.
     /// A <c>Idempotency-Key</c> é automática e repetida em todas as tentativas.
     /// </summary>
