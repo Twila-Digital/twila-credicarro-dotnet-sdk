@@ -140,6 +140,32 @@ public class ResilienceDelegatingHandlerTests
     }
 
     [Fact]
+    public async Task SendAsync_PostDeSimulacaoSemCpfCom500_ERepetidoSemIdempotencyKey()
+    {
+        var inner = FailThenSucceed(1, 500);
+        var client = TestApiClientFactory.CreateApiHttpClient(inner, Options());
+
+        var response = await client.PostAsync("v1/proposal/simulation/financing/without-cpf", new StringContent("{}"));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(2, inner.CallCount);
+        Assert.All(inner.Requests, request => Assert.False(request.HasHeader("Idempotency-Key")));
+    }
+
+    [Fact]
+    public async Task SendAsync_PostDeRefinanciamentoSemCpfCom500_ERepetidoSemIdempotencyKey()
+    {
+        var inner = FailThenSucceed(1, 500);
+        var client = TestApiClientFactory.CreateApiHttpClient(inner, Options());
+
+        var response = await client.PostAsync("v1/proposal/simulation/refinancing/without-cpf", new StringContent("{}"));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(2, inner.CallCount);
+        Assert.All(inner.Requests, request => Assert.False(request.HasHeader("Idempotency-Key")));
+    }
+
+    [Fact]
     public async Task SendAsync_PostDeCriacaoCom503_TentaNovamenteComAMesmaIdempotencyKey()
     {
         var inner = FailThenSucceed(2, 503);

@@ -79,6 +79,270 @@ public class V1ClientTests
         Assert.Equal(45000m, body.RootElement.GetProperty("valorVeiculo").GetDecimal());
     }
 
+    private const string WithoutCpfJson = """
+        { "cotacoes": [ {
+            "valor_solicitado": 31500, "prazo": 24, "valor_parcela": 2033.96, "valor_tac": 1500, "valor_boleto": 0, "valor_seguro": 0,
+            "valor_iof": 934.29, "percentual_iof": 3, "valor_credito_total": 34084.29, "valor_divida_total": 48815.04,
+            "percentual_cet_mensal": 3.47968, "percentual_cet_anual": 50.7513, "percentual_juros_mensal": 2.8, "percentual_juros_anual": 39.28918,
+            "valor_retencao_diaria_aproximado": 12.5, "valor_entrada_minima": 13500 },
+          { "valor_solicitado": 31500, "prazo": 36, "valor_parcela": 1500.1, "valor_tac": 1500, "valor_boleto": 0, "valor_seguro": 0,
+            "valor_iof": 1000, "percentual_iof": 3, "valor_credito_total": 34000, "valor_divida_total": 54000,
+            "percentual_cet_mensal": 3.1, "percentual_cet_anual": 44.2, "percentual_juros_mensal": 2.8, "percentual_juros_anual": 39.3,
+            "valor_entrada_minima": 13500 } ] }
+        """;
+
+    [Fact]
+    public async Task CreateFinancingWithoutCpfAsync_ComEntrada_EnviaOCorpoEMapeiaAsOpcoes()
+    {
+        var inner = RespondWith(WithoutCpfJson);
+
+        var options = await Simulations(inner).CreateFinancingWithoutCpfAsync(
+            new CreateFinancingWithoutCpfRequest("ABC1D23", 45000m, "SP", 13500m));
+
+        Assert.Equal(2, options.Count);
+        var first = options[0];
+        Assert.Equal(31500m, first.RequestedAmount);
+        Assert.Equal(24, first.Term);
+        Assert.Equal(2033.96m, first.InstallmentAmount);
+        Assert.Equal(1500m, first.TacAmount);
+        Assert.Equal(0m, first.BoletoAmount);
+        Assert.Equal(0m, first.InsuranceAmount);
+        Assert.Equal(934.29m, first.IofAmount);
+        Assert.Equal(3m, first.IofRate);
+        Assert.Equal(34084.29m, first.TotalCreditAmount);
+        Assert.Equal(48815.04m, first.TotalDebtAmount);
+        Assert.Equal(3.47968m, first.MonthlyCet);
+        Assert.Equal(50.7513m, first.AnnualCet);
+        Assert.Equal(2.8m, first.MonthlyInterestRate);
+        Assert.Equal(39.28918m, first.AnnualInterestRate);
+        Assert.Equal(12.5m, first.ApproximateDailyRetention);
+        Assert.Equal(13500m, first.MinimumDownPayment);
+
+        var request = inner.Requests.Single();
+        Assert.Equal("POST", request.Method.Method);
+        Assert.Equal("/integration/v1/proposal/simulation/financing/without-cpf", request.Path);
+
+        using var body = JsonDocument.Parse(request.Body);
+        Assert.Equal("ABC1D23", body.RootElement.GetProperty("placa").GetString());
+        Assert.Equal(45000m, body.RootElement.GetProperty("valorVeiculo").GetDecimal());
+        Assert.Equal(13500m, body.RootElement.GetProperty("valorEntrada").GetDecimal());
+        Assert.Equal("SP", body.RootElement.GetProperty("uf").GetString());
+        Assert.False(body.RootElement.TryGetProperty("cpf", out _));
+        Assert.False(body.RootElement.TryGetProperty("cnpjLoja", out _));
+    }
+
+    [Fact]
+    public async Task CreateFinancingWithoutCpfAsync_SemEntrada_NaoEnviaValorEntrada()
+    {
+        var inner = RespondWith(WithoutCpfJson);
+
+        await Simulations(inner).CreateFinancingWithoutCpfAsync(new CreateFinancingWithoutCpfRequest("ABC1D23", 45000m, "SP"));
+
+        using var body = JsonDocument.Parse(inner.Requests.Single().Body);
+        Assert.False(body.RootElement.TryGetProperty("valorEntrada", out _));
+    }
+
+    [Fact]
+    public async Task CreateFinancingWithoutCpfAsync_ComEntradaZero_EnviaZero()
+    {
+        var inner = RespondWith(WithoutCpfJson);
+
+        await Simulations(inner).CreateFinancingWithoutCpfAsync(new CreateFinancingWithoutCpfRequest("ABC1D23", 45000m, "SP", 0m));
+
+        using var body = JsonDocument.Parse(inner.Requests.Single().Body);
+        Assert.Equal(0m, body.RootElement.GetProperty("valorEntrada").GetDecimal());
+    }
+
+    [Fact]
+    public async Task CreateFinancingWithoutCpfAsync_SemRetencaoDiaria_DeixaOCampoNulo()
+    {
+        var inner = RespondWith(WithoutCpfJson);
+
+        var options = await Simulations(inner).CreateFinancingWithoutCpfAsync(new CreateFinancingWithoutCpfRequest("ABC1D23", 45000m, "SP"));
+
+        Assert.Null(options[1].ApproximateDailyRetention);
+    }
+
+    [Fact]
+    public async Task CreateFinancingWithoutCpfAsync_SemCotacoes_DevolveListaVazia()
+    {
+        var options = await Simulations(RespondWith("{}")).CreateFinancingWithoutCpfAsync(new CreateFinancingWithoutCpfRequest("ABC1D23", 45000m, "SP"));
+
+        Assert.Empty(options);
+    }
+
+    [Fact]
+    public async Task CreateFinancingWithoutCpfAsync_NaoGeraNemEnviaIdempotencyKey()
+    {
+        var inner = RespondWith(WithoutCpfJson);
+
+        await Simulations(inner).CreateFinancingWithoutCpfAsync(new CreateFinancingWithoutCpfRequest("ABC1D23", 45000m, "SP"));
+
+        Assert.False(inner.Requests.Single().HasHeader("Idempotency-Key"));
+    }
+
+    [Fact]
+    public async Task CreateFinancingWithoutCpfAsync_ComFalhaTransitoria_RepeteSemIdempotencyKey()
+    {
+        var inner = new FakeHttpMessageHandler((_, callIndex) => Task.FromResult(callIndex == 1
+            ? TestApiClientFactory.Status(503)
+            : TestApiClientFactory.Json(WithoutCpfJson)));
+
+        var options = await Simulations(inner).CreateFinancingWithoutCpfAsync(new CreateFinancingWithoutCpfRequest("ABC1D23", 45000m, "SP"));
+
+        Assert.Equal(2, inner.CallCount);
+        Assert.Equal(2, options.Count);
+        Assert.All(inner.Requests, request => Assert.False(request.HasHeader("Idempotency-Key")));
+    }
+
+    [Theory]
+    [InlineData(404, "Fipe.VehiclePlateNotFound")]
+    [InlineData(404, "Store.Integration.NotFound")]
+    [InlineData(422, "Store.Integration.Intermediation")]
+    [InlineData(422, "Proposal.DownPaymentInvalid")]
+    [InlineData(422, "Simulation.Terms.Unavailable")]
+    public async Task CreateFinancingWithoutCpfAsync_ComErroDaApi_LancaCredicarroApiException(int status, string errorCode)
+    {
+        var json = $$"""{ "tipo": "{{errorCode}}", "titulo": "Erro", "status": {{status}} }""";
+        var inner = RespondWith(json, (HttpStatusCode)status);
+
+        var exception = await Assert.ThrowsAnyAsync<CredicarroApiException>(
+            () => Simulations(inner).CreateFinancingWithoutCpfAsync(new CreateFinancingWithoutCpfRequest("ABC1D23", 45000m, "SP")));
+
+        Assert.Equal(errorCode, exception.ErrorCode);
+        Assert.Equal(1, inner.CallCount);
+    }
+
+    [Fact]
+    public void CreateFinancingWithoutCpfRequest_ToString_MascaraAPlaca()
+    {
+        var text = new CreateFinancingWithoutCpfRequest("ABC1D23", 45000m, "SP").ToString();
+
+        Assert.DoesNotContain("ABC1D23", text);
+    }
+
+    private const string RefinancingWithoutCpfJson = """
+        { "cotacoes": [ {
+            "valor_solicitado": 20000, "prazo": 24, "valor_parcela": 1180.5, "valor_tac": 1500, "valor_boleto": 0, "valor_seguro": 0,
+            "valor_iof": 600.1, "percentual_iof": 3, "valor_credito_total": 22100.1, "valor_divida_total": 28332,
+            "percentual_cet_mensal": 3.2, "percentual_cet_anual": 45.9, "percentual_juros_mensal": 2.8, "percentual_juros_anual": 39.28918,
+            "valor_retencao_diaria_aproximado": 9.75, "valor_minimo_refinanciavel": 5000, "valor_maximo_refinanciavel": 30000 },
+          { "valor_solicitado": 20000, "prazo": 36, "valor_parcela": 900.2, "valor_tac": 1500, "valor_boleto": 0, "valor_seguro": 0,
+            "valor_iof": 700, "percentual_iof": 3, "valor_credito_total": 22200, "valor_divida_total": 32400,
+            "percentual_cet_mensal": 3.1, "percentual_cet_anual": 44.2, "percentual_juros_mensal": 2.8, "percentual_juros_anual": 39.3,
+            "valor_minimo_refinanciavel": 6000, "valor_maximo_refinanciavel": 40000 } ] }
+        """;
+
+    [Fact]
+    public async Task CreateRefinancingWithoutCpfAsync_EnviaOCorpoEMapeiaAsOpcoes()
+    {
+        var inner = RespondWith(RefinancingWithoutCpfJson);
+
+        var options = await Simulations(inner).CreateRefinancingWithoutCpfAsync(
+            new CreateRefinancingWithoutCpfRequest("ABC1D23", 20000m, "SP"));
+
+        Assert.Equal(2, options.Count);
+        var first = options[0];
+        Assert.Equal(20000m, first.RequestedAmount);
+        Assert.Equal(24, first.Term);
+        Assert.Equal(1180.5m, first.InstallmentAmount);
+        Assert.Equal(1500m, first.TacAmount);
+        Assert.Equal(0m, first.BoletoAmount);
+        Assert.Equal(0m, first.InsuranceAmount);
+        Assert.Equal(600.1m, first.IofAmount);
+        Assert.Equal(3m, first.IofRate);
+        Assert.Equal(22100.1m, first.TotalCreditAmount);
+        Assert.Equal(28332m, first.TotalDebtAmount);
+        Assert.Equal(3.2m, first.MonthlyCet);
+        Assert.Equal(45.9m, first.AnnualCet);
+        Assert.Equal(2.8m, first.MonthlyInterestRate);
+        Assert.Equal(39.28918m, first.AnnualInterestRate);
+        Assert.Equal(9.75m, first.ApproximateDailyRetention);
+        Assert.Equal(5000m, first.MinimumAmount);
+        Assert.Equal(30000m, first.MaximumAmount);
+
+        var request = inner.Requests.Single();
+        Assert.Equal("POST", request.Method.Method);
+        Assert.Equal("/integration/v1/proposal/simulation/refinancing/without-cpf", request.Path);
+
+        using var body = JsonDocument.Parse(request.Body);
+        Assert.Equal("ABC1D23", body.RootElement.GetProperty("placa").GetString());
+        Assert.Equal(20000m, body.RootElement.GetProperty("valorSolicitado").GetDecimal());
+        Assert.Equal("SP", body.RootElement.GetProperty("uf").GetString());
+        Assert.False(body.RootElement.TryGetProperty("cpf", out _));
+        Assert.False(body.RootElement.TryGetProperty("cnpjLoja", out _));
+    }
+
+    [Fact]
+    public async Task CreateRefinancingWithoutCpfAsync_SemRetencaoDiaria_DeixaOCampoNulo()
+    {
+        var inner = RespondWith(RefinancingWithoutCpfJson);
+
+        var options = await Simulations(inner).CreateRefinancingWithoutCpfAsync(new CreateRefinancingWithoutCpfRequest("ABC1D23", 20000m, "SP"));
+
+        Assert.Null(options[1].ApproximateDailyRetention);
+        Assert.Equal(6000m, options[1].MinimumAmount);
+        Assert.Equal(40000m, options[1].MaximumAmount);
+    }
+
+    [Fact]
+    public async Task CreateRefinancingWithoutCpfAsync_SemCotacoes_DevolveListaVazia()
+    {
+        var options = await Simulations(RespondWith("{}")).CreateRefinancingWithoutCpfAsync(new CreateRefinancingWithoutCpfRequest("ABC1D23", 20000m, "SP"));
+
+        Assert.Empty(options);
+    }
+
+    [Fact]
+    public async Task CreateRefinancingWithoutCpfAsync_NaoGeraNemEnviaIdempotencyKey()
+    {
+        var inner = RespondWith(RefinancingWithoutCpfJson);
+
+        await Simulations(inner).CreateRefinancingWithoutCpfAsync(new CreateRefinancingWithoutCpfRequest("ABC1D23", 20000m, "SP"));
+
+        Assert.False(inner.Requests.Single().HasHeader("Idempotency-Key"));
+    }
+
+    [Fact]
+    public async Task CreateRefinancingWithoutCpfAsync_ComFalhaTransitoria_RepeteSemIdempotencyKey()
+    {
+        var inner = new FakeHttpMessageHandler((_, callIndex) => Task.FromResult(callIndex == 1
+            ? TestApiClientFactory.Status(503)
+            : TestApiClientFactory.Json(RefinancingWithoutCpfJson)));
+
+        var options = await Simulations(inner).CreateRefinancingWithoutCpfAsync(new CreateRefinancingWithoutCpfRequest("ABC1D23", 20000m, "SP"));
+
+        Assert.Equal(2, inner.CallCount);
+        Assert.Equal(2, options.Count);
+        Assert.All(inner.Requests, request => Assert.False(request.HasHeader("Idempotency-Key")));
+    }
+
+    [Theory]
+    [InlineData(404, "Fipe.VehiclePlateNotFound")]
+    [InlineData(404, "Store.Integration.NotFound")]
+    [InlineData(422, "Proposal.RequestAmountInvalid")]
+    [InlineData(422, "Store.Integration.Intermediation")]
+    [InlineData(422, "Simulation.Terms.Unavailable")]
+    public async Task CreateRefinancingWithoutCpfAsync_ComErroDaApi_LancaCredicarroApiException(int status, string errorCode)
+    {
+        var json = $$"""{ "tipo": "{{errorCode}}", "titulo": "Erro", "status": {{status}} }""";
+        var inner = RespondWith(json, (HttpStatusCode)status);
+
+        var exception = await Assert.ThrowsAnyAsync<CredicarroApiException>(
+            () => Simulations(inner).CreateRefinancingWithoutCpfAsync(new CreateRefinancingWithoutCpfRequest("ABC1D23", 20000m, "SP")));
+
+        Assert.Equal(errorCode, exception.ErrorCode);
+        Assert.Equal(1, inner.CallCount);
+    }
+
+    [Fact]
+    public void CreateRefinancingWithoutCpfRequest_ToString_MascaraAPlaca()
+    {
+        var text = new CreateRefinancingWithoutCpfRequest("ABC1D23", 20000m, "SP").ToString();
+
+        Assert.DoesNotContain("ABC1D23", text);
+    }
+
     [Fact]
     public async Task CreateRefinancingAsync_NaoEnviaCnpjLoja()
     {

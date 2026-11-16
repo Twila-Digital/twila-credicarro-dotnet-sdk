@@ -56,6 +56,22 @@ public class ApiRoutesTests
     }
 
     [Fact]
+    public void SimulacaoSemCpf_NaoUsaChaveAutomaticaESoCalcula()
+    {
+        Assert.False(ApiRoutes.RequiresAutomaticIdempotencyKey("v1/proposal/simulation/financing/without-cpf"));
+        Assert.True(ApiRoutes.IsStatelessCalculation("v1/proposal/simulation/financing/without-cpf"));
+        Assert.False(ApiRoutes.IsStatelessCalculation("v1/proposal/simulation/financing"));
+    }
+
+    [Fact]
+    public void RefinanciamentoSemCpf_NaoUsaChaveAutomaticaESoCalcula()
+    {
+        Assert.False(ApiRoutes.RequiresAutomaticIdempotencyKey("v1/proposal/simulation/refinancing/without-cpf"));
+        Assert.True(ApiRoutes.IsStatelessCalculation("v1/proposal/simulation/refinancing/without-cpf"));
+        Assert.False(ApiRoutes.IsStatelessCalculation("v1/proposal/simulation/refinancing"));
+    }
+
+    [Fact]
     public void RequiresAutomaticIdempotencyKey_ExcluiUnifiedEWebhook()
     {
         Assert.False(ApiRoutes.RequiresAutomaticIdempotencyKey("v1/customer/unified"));

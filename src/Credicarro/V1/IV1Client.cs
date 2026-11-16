@@ -29,8 +29,22 @@ public interface IV1SimulationsClient
     /// <summary>Simula um financiamento (<c>POST v1/proposal/simulation/financing</c>). A <c>Idempotency-Key</c> é automática.</summary>
     Task<IReadOnlyList<SimulationOption>> CreateFinancingAsync(CreateFinancingSimulationV1Request request, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Calcula as parcelas de um financiamento só com placa, valor do veículo e UF, sem CPF e sem cadastro de cliente
+    /// (<c>POST v1/proposal/simulation/financing/without-cpf</c>). Nada é gravado: as opções não têm identificador e não servem para criar proposta.
+    /// Não usa <c>Idempotency-Key</c> e é repetida com segurança em falhas transitórias.
+    /// </summary>
+    Task<IReadOnlyList<FinancingWithoutCpfOption>> CreateFinancingWithoutCpfAsync(CreateFinancingWithoutCpfRequest request, CancellationToken cancellationToken = default);
+
     /// <summary>Simula um refinanciamento (<c>POST v1/proposal/simulation/refinancing</c>). A <c>Idempotency-Key</c> é automática.</summary>
     Task<IReadOnlyList<SimulationOption>> CreateRefinancingAsync(CreateRefinancingSimulationV1Request request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Calcula as parcelas de um refinanciamento só com placa, valor solicitado e UF, sem CPF e sem cadastro de cliente
+    /// (<c>POST v1/proposal/simulation/refinancing/without-cpf</c>). Nada é gravado: as opções não têm identificador e não servem para criar proposta.
+    /// Só voltam os prazos em cuja faixa o valor cabe. Não usa <c>Idempotency-Key</c> e é repetida com segurança em falhas transitórias.
+    /// </summary>
+    Task<IReadOnlyList<RefinancingWithoutCpfOption>> CreateRefinancingWithoutCpfAsync(CreateRefinancingWithoutCpfRequest request, CancellationToken cancellationToken = default);
 }
 
 /// <summary>

@@ -9,6 +9,7 @@ namespace Credicarro.Resilience;
 /// <item><c>GET</c>/<c>HEAD</c>/<c>OPTIONS</c>;</item>
 /// <item><c>POST v1/authentication/accesstoken</c>;</item>
 /// <item><c>POST</c> com <c>Idempotency-Key</c> (inclusive <c>v1/customer/unified</c> quando o integrador passa a chave);</item>
+/// <item><c>POST v1/proposal/simulation/financing/without-cpf</c> e <c>refinancing/without-cpf</c> (só calculam, sem efeito colateral);</item>
 /// <item><c>POST v2/proposal/{id}/vehicle-detail</c> e <c>deposit-account</c> (reenviar substitui);</item>
 /// <item><c>PUT</c>/<c>DELETE v1/webhook/{id}</c>.</item>
 /// </list>
@@ -29,7 +30,7 @@ internal static class IdempotencyClassifier
         if (request.Method != HttpMethod.Post)
             return false;
 
-        if (ApiRoutes.IsAuthentication(path) || ApiRoutes.IsReplaceSemantics(path))
+        if (ApiRoutes.IsAuthentication(path) || ApiRoutes.IsReplaceSemantics(path) || ApiRoutes.IsStatelessCalculation(path))
             return true;
 
         return request.Headers.Contains(IdempotencyKeyDelegatingHandler.HeaderName);

@@ -58,6 +58,59 @@ internal static class SimulationMapper
         return new CreateRefinancingSimulationV1RequestWire(request.Cpf, request.LicensePlate, request.RequestedAmount);
     }
 
+    public static CreateFinancingWithoutCpfRequestWire ToWire(CreateFinancingWithoutCpfRequest request)
+    {
+        if (request is null)
+            throw new ArgumentNullException(nameof(request));
+
+        return new CreateFinancingWithoutCpfRequestWire(request.LicensePlate, request.VehicleAmount, request.DownPayment, request.State);
+    }
+
+    public static FinancingWithoutCpfOption ToPublic(FinancingWithoutCpfOptionWire wire) => new(
+        wire.ValorSolicitado,
+        wire.Prazo,
+        wire.ValorParcela,
+        wire.ValorTac,
+        wire.ValorBoleto,
+        wire.ValorSeguro,
+        wire.ValorIof,
+        wire.PercentualIof,
+        wire.ValorCreditoTotal,
+        wire.ValorDividaTotal,
+        wire.PercentualCetMensal,
+        wire.PercentualCetAnual,
+        wire.PercentualJurosMensal,
+        wire.PercentualJurosAnual,
+        wire.ValorRetencaoDiariaAproximado,
+        wire.ValorEntradaMinima);
+
+    public static CreateRefinancingWithoutCpfRequestWire ToWire(CreateRefinancingWithoutCpfRequest request)
+    {
+        if (request is null)
+            throw new ArgumentNullException(nameof(request));
+
+        return new CreateRefinancingWithoutCpfRequestWire(request.LicensePlate, request.RequestedAmount, request.State);
+    }
+
+    public static RefinancingWithoutCpfOption ToPublic(RefinancingWithoutCpfOptionWire wire) => new(
+        wire.ValorSolicitado,
+        wire.Prazo,
+        wire.ValorParcela,
+        wire.ValorTac,
+        wire.ValorBoleto,
+        wire.ValorSeguro,
+        wire.ValorIof,
+        wire.PercentualIof,
+        wire.ValorCreditoTotal,
+        wire.ValorDividaTotal,
+        wire.PercentualCetMensal,
+        wire.PercentualCetAnual,
+        wire.PercentualJurosMensal,
+        wire.PercentualJurosAnual,
+        wire.ValorRetencaoDiariaAproximado,
+        wire.ValorMinimoRefinanciavel,
+        wire.ValorMaximoRefinanciavel);
+
     public static SimulationOption ToPublic(SimulationOptionWire wire) => new(
         wire.IdSimulacao,
         wire.ValorSolicitado,

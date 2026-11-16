@@ -49,7 +49,11 @@ public sealed class WireContractTests(OpenApiSchemaFixture fixture)
         yield return Case(typeof(RefinancingRangeResponseWire), "get", "/v1/proposal/simulation/range/refinancing", Response);
         yield return Case(typeof(CreateFinancingSimulationV1RequestWire), "post", "/v1/proposal/simulation/financing", Request);
         yield return Case(typeof(SimulationListResponseWire), "post", "/v1/proposal/simulation/financing", Response);
+        yield return Case(typeof(CreateFinancingWithoutCpfRequestWire), "post", "/v1/proposal/simulation/financing/without-cpf", Request);
+        yield return Case(typeof(FinancingWithoutCpfResponseWire), "post", "/v1/proposal/simulation/financing/without-cpf", Response);
         yield return Case(typeof(CreateRefinancingSimulationV1RequestWire), "post", "/v1/proposal/simulation/refinancing", Request);
+        yield return Case(typeof(CreateRefinancingWithoutCpfRequestWire), "post", "/v1/proposal/simulation/refinancing/without-cpf", Request);
+        yield return Case(typeof(RefinancingWithoutCpfResponseWire), "post", "/v1/proposal/simulation/refinancing/without-cpf", Response);
         yield return Case(typeof(SimulationListResponseWire), "post", "/v1/proposal/simulation/refinancing", Response);
         yield return Case(typeof(SimulationWire), "get", "/v1/proposal/simulation/{simulacaoId}", Response);
         yield return Case(typeof(PagedResultWire<SimulationWire>), "get", "/v1/proposal/simulation", Response);
@@ -120,7 +124,9 @@ public sealed class WireContractTests(OpenApiSchemaFixture fixture)
         "get /v1/proposal/simulation/range/financing",
         "get /v1/proposal/simulation/range/refinancing",
         "post /v1/proposal/simulation/financing",
+        "post /v1/proposal/simulation/financing/without-cpf",
         "post /v1/proposal/simulation/refinancing",
+        "post /v1/proposal/simulation/refinancing/without-cpf",
         "get /v1/proposal/simulation/{simulacaoId}",
         "get /v1/proposal/simulation",
         "post /v2/proposal",
