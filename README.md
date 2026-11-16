@@ -155,11 +155,31 @@ A `Idempotency-Key` é **obrigatória** nesta rota. Gere uma chave **por envio**
 | `client.Simulations` | `GetFinancingRangeAsync`, `GetRefinancingRangeAsync`, `CreateFinancingAsync`, `CreateRefinancingAsync`, `GetAsync`, `ListAsync` |
 | `client.Proposals` | `CreateAsync`, `GetAsync`, `ListAsync`, `SendVehicleDetailsAsync`, `SendDepositAccountAsync`, `UploadDocumentAsync` |
 | `client.Webhooks` | `CreateAsync`, `ListAsync`, `UpdateAsync`, `DeleteAsync` |
-| `client.V1.Simulations` | `GetFinancingRangeAsync(placa)`, `GetRefinancingRangeAsync(placa)`, `CreateFinancingAsync`, `CreateRefinancingAsync` (rotas v1, sem `cnpjLoja`) |
+| `client.V1.Simulations` | `GetFinancingRangeAsync(placa)`, `GetRefinancingRangeAsync(placa)`, `CreateFinancingAsync`, `CreateFinancingWithoutCpfAsync` e `CreateRefinancingWithoutCpfAsync` (sem CPF e sem cadastro, nada é gravado), `CreateRefinancingAsync` (rotas v1, sem `cnpjLoja`) |
 | `client.V1.Proposals` | `CreateAsync` (`POST v1/proposal`), `GetAsync` (`GET v1/proposal/{id}`, formato resumido) |
 | `CredicarroWebhookEvent` | `Parse`, `VerifySignature`, `VerifyAuthorization` (estático, para o seu endpoint de webhook) |
 
 Todos os métodos são assíncronos e aceitam `CancellationToken`. As rotas v2 (`Simulations` e `Proposals`) escolhem a loja pelo `cnpjLoja` e devolvem o retrato com etapas e documentos; as rotas v1 (`client.V1`) ficam para integrações antigas.
+
+Para mostrar parcelas antes de ter o CPF, `client.V1.Simulations.CreateFinancingWithoutCpfAsync` calcula só com placa, valor do veículo e UF, na loja de integração do parceiro. Nada é gravado: as opções não têm `SimulationId` e não servem para criar proposta (para isso, simule com o CPF). `DownPayment` é opcional; sem ele, a API usa a entrada mínima da taxa da loja.
+
+```csharp
+var opcoes = await client.V1.Simulations.CreateFinancingWithoutCpfAsync(
+    new CreateFinancingWithoutCpfRequest(LicensePlate: "ABC1D23", VehicleAmount: 45000m, State: "SP"));
+
+foreach (var opcao in opcoes)
+    Console.WriteLine($"{opcao.Term}x de R$ {opcao.InstallmentAmount:0.00} (entrada mínima R$ {opcao.MinimumDownPayment:0.00})");
+```
+
+O refinanciamento sem CPF segue o mesmo princípio com `CreateRefinancingWithoutCpfAsync`: placa, valor solicitado e UF (obrigatória, define as taxas e o custo de registro). Só voltam os prazos em cuja faixa o valor cabe; `MinimumAmount` e `MaximumAmount` trazem a faixa refinanciável de cada um.
+
+```csharp
+var opcoes = await client.V1.Simulations.CreateRefinancingWithoutCpfAsync(
+    new CreateRefinancingWithoutCpfRequest(LicensePlate: "ABC1D23", RequestedAmount: 20000m, State: "SP"));
+
+foreach (var opcao in opcoes)
+    Console.WriteLine($"{opcao.Term}x de R$ {opcao.InstallmentAmount:0.00} (faixa R$ {opcao.MinimumAmount:0.00} a R$ {opcao.MaximumAmount:0.00})");
+```
 
 ## Idempotência e retentativas
 
@@ -170,6 +190,7 @@ O SDK gera uma `Idempotency-Key` (UUID) **por chamada lógica** e a repete em **
 | `GET`, geração do token | n/a | Sim |
 | `Customers.CreateAsync`, `UpsertAddressAsync`, `UpsertProfessionalDataAsync` | Automática (ou a sua, em `idempotencyKey`) | Sim |
 | `Simulations.CreateFinancingAsync` e `CreateRefinancingAsync` (v2 e v1) | Automática | Sim |
+| `V1.Simulations.CreateFinancingWithoutCpfAsync` e `CreateRefinancingWithoutCpfAsync` | Sem chave (não grava nada) | Sim |
 | `Proposals.CreateAsync` (v2 e v1) | Automática | Sim |
 | `Proposals.UploadDocumentAsync` | Obrigatória: a sua (`idempotencyKey`) ou uma gerada | Sim, com a mesma chave |
 | `Proposals.SendVehicleDetailsAsync`, `SendDepositAccountAsync` | Sem chave (reenviar substitui) | Sim |

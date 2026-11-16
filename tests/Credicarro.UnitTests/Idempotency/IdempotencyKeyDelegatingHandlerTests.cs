@@ -46,6 +46,8 @@ public class IdempotencyKeyDelegatingHandlerTests
     [Theory]
     [InlineData("v1/customer/unified")]
     [InlineData("v1/webhook")]
+    [InlineData("v1/proposal/simulation/financing/without-cpf")]
+    [InlineData("v1/proposal/simulation/refinancing/without-cpf")]
     [InlineData("v1/authentication/accesstoken")]
     [InlineData("v2/proposal/" + ProposalId + "/vehicle-detail")]
     [InlineData("v2/proposal/" + ProposalId + "/deposit-account")]

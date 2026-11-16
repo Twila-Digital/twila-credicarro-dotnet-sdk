@@ -45,6 +45,60 @@ internal sealed record CreateRefinancingSimulationV1RequestWire(
     [property: JsonPropertyName("placa")] string Placa,
     [property: JsonPropertyName("valorSolicitado")] decimal ValorSolicitado);
 
+internal sealed record CreateFinancingWithoutCpfRequestWire(
+    [property: JsonPropertyName("placa")] string Placa,
+    [property: JsonPropertyName("valorVeiculo")] decimal ValorVeiculo,
+    [property: JsonPropertyName("valorEntrada")] decimal? ValorEntrada,
+    [property: JsonPropertyName("uf")] string Uf);
+
+internal sealed record FinancingWithoutCpfResponseWire(
+    [property: JsonPropertyName("cotacoes")] IReadOnlyList<FinancingWithoutCpfOptionWire>? Cotacoes);
+
+internal sealed record FinancingWithoutCpfOptionWire(
+    [property: JsonPropertyName("valor_solicitado")] decimal ValorSolicitado,
+    [property: JsonPropertyName("prazo")] int Prazo,
+    [property: JsonPropertyName("valor_parcela")] decimal ValorParcela,
+    [property: JsonPropertyName("valor_tac")] decimal ValorTac,
+    [property: JsonPropertyName("valor_boleto")] decimal ValorBoleto,
+    [property: JsonPropertyName("valor_seguro")] decimal ValorSeguro,
+    [property: JsonPropertyName("valor_iof")] decimal ValorIof,
+    [property: JsonPropertyName("percentual_iof")] decimal PercentualIof,
+    [property: JsonPropertyName("valor_credito_total")] decimal ValorCreditoTotal,
+    [property: JsonPropertyName("valor_divida_total")] decimal ValorDividaTotal,
+    [property: JsonPropertyName("percentual_cet_mensal")] decimal PercentualCetMensal,
+    [property: JsonPropertyName("percentual_cet_anual")] decimal PercentualCetAnual,
+    [property: JsonPropertyName("percentual_juros_mensal")] decimal PercentualJurosMensal,
+    [property: JsonPropertyName("percentual_juros_anual")] decimal PercentualJurosAnual,
+    [property: JsonPropertyName("valor_retencao_diaria_aproximado")] decimal? ValorRetencaoDiariaAproximado,
+    [property: JsonPropertyName("valor_entrada_minima")] decimal ValorEntradaMinima);
+
+internal sealed record CreateRefinancingWithoutCpfRequestWire(
+    [property: JsonPropertyName("placa")] string Placa,
+    [property: JsonPropertyName("valorSolicitado")] decimal ValorSolicitado,
+    [property: JsonPropertyName("uf")] string Uf);
+
+internal sealed record RefinancingWithoutCpfResponseWire(
+    [property: JsonPropertyName("cotacoes")] IReadOnlyList<RefinancingWithoutCpfOptionWire>? Cotacoes);
+
+internal sealed record RefinancingWithoutCpfOptionWire(
+    [property: JsonPropertyName("valor_solicitado")] decimal ValorSolicitado,
+    [property: JsonPropertyName("prazo")] int Prazo,
+    [property: JsonPropertyName("valor_parcela")] decimal ValorParcela,
+    [property: JsonPropertyName("valor_tac")] decimal ValorTac,
+    [property: JsonPropertyName("valor_boleto")] decimal ValorBoleto,
+    [property: JsonPropertyName("valor_seguro")] decimal ValorSeguro,
+    [property: JsonPropertyName("valor_iof")] decimal ValorIof,
+    [property: JsonPropertyName("percentual_iof")] decimal PercentualIof,
+    [property: JsonPropertyName("valor_credito_total")] decimal ValorCreditoTotal,
+    [property: JsonPropertyName("valor_divida_total")] decimal ValorDividaTotal,
+    [property: JsonPropertyName("percentual_cet_mensal")] decimal PercentualCetMensal,
+    [property: JsonPropertyName("percentual_cet_anual")] decimal PercentualCetAnual,
+    [property: JsonPropertyName("percentual_juros_mensal")] decimal PercentualJurosMensal,
+    [property: JsonPropertyName("percentual_juros_anual")] decimal PercentualJurosAnual,
+    [property: JsonPropertyName("valor_retencao_diaria_aproximado")] decimal? ValorRetencaoDiariaAproximado,
+    [property: JsonPropertyName("valor_minimo_refinanciavel")] decimal ValorMinimoRefinanciavel,
+    [property: JsonPropertyName("valor_maximo_refinanciavel")] decimal ValorMaximoRefinanciavel);
+
 internal sealed record SimulationListResponseWire(
     [property: JsonPropertyName("simulacoes")] IReadOnlyList<SimulationOptionWire>? Simulacoes);
 

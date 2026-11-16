@@ -49,6 +49,20 @@ internal sealed class V1SimulationsClient(HttpClient httpClient) : IV1Simulation
         return (wire.Simulacoes ?? Array.Empty<SimulationOptionWire>()).Select(SimulationMapper.ToPublic).ToList();
     }
 
+    public async Task<IReadOnlyList<FinancingWithoutCpfOption>> CreateFinancingWithoutCpfAsync(CreateFinancingWithoutCpfRequest request, CancellationToken cancellationToken = default)
+    {
+        var wireRequest = SimulationMapper.ToWire(request);
+
+        var wire = await ApiTransport
+            .SendAsync<FinancingWithoutCpfResponseWire>(
+                httpClient,
+                ApiTransport.CreateJsonRequest(HttpMethod.Post, "v1/proposal/simulation/financing/without-cpf", wireRequest),
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        return (wire.Cotacoes ?? Array.Empty<FinancingWithoutCpfOptionWire>()).Select(SimulationMapper.ToPublic).ToList();
+    }
+
     public async Task<IReadOnlyList<SimulationOption>> CreateRefinancingAsync(CreateRefinancingSimulationV1Request request, CancellationToken cancellationToken = default)
     {
         var wireRequest = SimulationMapper.ToWire(request);
@@ -61,6 +75,20 @@ internal sealed class V1SimulationsClient(HttpClient httpClient) : IV1Simulation
             .ConfigureAwait(false);
 
         return (wire.Simulacoes ?? Array.Empty<SimulationOptionWire>()).Select(SimulationMapper.ToPublic).ToList();
+    }
+
+    public async Task<IReadOnlyList<RefinancingWithoutCpfOption>> CreateRefinancingWithoutCpfAsync(CreateRefinancingWithoutCpfRequest request, CancellationToken cancellationToken = default)
+    {
+        var wireRequest = SimulationMapper.ToWire(request);
+
+        var wire = await ApiTransport
+            .SendAsync<RefinancingWithoutCpfResponseWire>(
+                httpClient,
+                ApiTransport.CreateJsonRequest(HttpMethod.Post, "v1/proposal/simulation/refinancing/without-cpf", wireRequest),
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        return (wire.Cotacoes ?? Array.Empty<RefinancingWithoutCpfOptionWire>()).Select(SimulationMapper.ToPublic).ToList();
     }
 
     private static string RangePath(string route, string licensePlate)

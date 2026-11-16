@@ -53,6 +53,11 @@ internal static class ApiRoutes
     public static bool IsAuthentication(string path) =>
         string.Equals(path, "v1/authentication/accesstoken", StringComparison.OrdinalIgnoreCase);
 
+    /// <summary><c>POST v1/proposal/simulation/{financing|refinancing}/without-cpf</c>: só calcula, não grava nada e não usa chave.</summary>
+    public static bool IsStatelessCalculation(string path) =>
+        string.Equals(path, "v1/proposal/simulation/financing/without-cpf", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(path, "v1/proposal/simulation/refinancing/without-cpf", StringComparison.OrdinalIgnoreCase);
+
     public static bool RequiresAutomaticIdempotencyKey(string path) =>
         Array.Exists(AutomaticIdempotencyRoutes, route => string.Equals(path, route, StringComparison.OrdinalIgnoreCase))
         || IsDocumentUpload(path);
